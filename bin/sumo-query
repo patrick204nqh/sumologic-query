@@ -1,0 +1,121 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Simple CLI wrapper for querying Sumo Logic logs
+# Usage: sumo-query --query "error" --from "2025-11-13T14:00:00" --to "2025-11-13T15:00:00"
+
+require_relative '../lib/sumologic'
+require 'optparse'
+require 'json'
+
+options = {
+  time_zone: 'UTC'
+}
+
+OptionParser.new do |opts|
+  opts.banner = <<~BANNER
+    Sumo Logic Query Tool - Fast, read-only log access
+
+    Usage: sumo-query [options]
+
+    Examples:
+      # Error timeline with 5-minute buckets
+      sumo-query --query 'error | timeslice 5m | count' \\
+        --from '2025-11-13T14:00:00' --to '2025-11-13T15:00:00'
+
+      # Search for specific text
+      sumo-query --query '"connection timeout"' \\
+        --from '2025-11-13T14:00:00' --to '2025-11-13T15:00:00' \\
+        --limit 100
+
+      # Filter by source category
+      sumo-query --query '_sourceCategory=prod/api error' \\
+        --from '2025-11-13T14:00:00' --to '2025-11-13T15:00:00' \\
+        --output results.json
+
+    Options:
+  BANNER
+
+  opts.on('-q', '--query QUERY', 'Search query (required)') { |v| options[:query] = v }
+  opts.on('-f', '--from TIME', 'Start time in ISO 8601 format (required)') { |v| options[:from] = v }
+  opts.on('-t', '--to TIME', 'End time in ISO 8601 format (required)') { |v| options[:to] = v }
+  opts.on('-z', '--time-zone TZ', 'Time zone (default: UTC)') { |v| options[:time_zone] = v }
+  opts.on('-l', '--limit N', Integer, 'Limit number of messages') { |v| options[:limit] = v }
+  opts.on('-o', '--output FILE', 'Output file (default: stdout)') { |v| options[:output] = v }
+  opts.on('-d', '--debug', 'Enable debug output') { $DEBUG = true }
+  opts.on('-h', '--help', 'Show this help') do
+    puts opts
+    exit
+  end
+  opts.on('-v', '--version', 'Show version') do
+    puts "sumologic-query v#{Sumologic::VERSION}"
+    exit
+  end
+end.parse!
+
+# Validate required options
+unless options[:query] && options[:from] && options[:to]
+  warn 'Error: --query, --from, and --to are required'
+  warn 'Run with --help for usage information'
+  exit 1
+end
+
+begin
+  # Create client
+  client = Sumologic::Client.new
+
+  warn "Querying Sumo Logic: #{options[:from]} to #{options[:to]}"
+  warn "Query: #{options[:query]}"
+  warn 'This may take 1-3 minutes depending on data volume...'
+  $stderr.puts
+
+  # Execute search
+  results = client.search(
+    query: options[:query],
+    from_time: options[:from],
+    to_time: options[:to],
+    time_zone: options[:time_zone],
+    limit: options[:limit]
+  )
+
+  # Format output
+  output = {
+    query: options[:query],
+    from: options[:from],
+    to: options[:to],
+    time_zone: options[:time_zone],
+    message_count: results.size,
+    messages: results
+  }
+
+  json_output = JSON.pretty_generate(output)
+
+  # Write to file or stdout
+  if options[:output]
+    File.write(options[:output], json_output)
+    warn "\nResults saved to: #{options[:output]}"
+    warn "Message count: #{results.size}"
+  else
+    puts json_output
+  end
+rescue Sumologic::AuthenticationError => e
+  warn "\nAuthentication Error: #{e.message}"
+  warn "\nPlease set environment variables:"
+  warn "  export SUMO_ACCESS_ID='your_access_id'"
+  warn "  export SUMO_ACCESS_KEY='your_access_key'"
+  warn "  export SUMO_DEPLOYMENT='us2'  # Optional, defaults to us2"
+  exit 1
+rescue Sumologic::TimeoutError => e
+  warn "\nTimeout Error: #{e.message}"
+  warn "\nTry:"
+  warn '  - Reducing time range'
+  warn '  - Using more specific filters in your query'
+  warn '  - Adding --limit to cap results'
+  exit 1
+rescue Sumologic::Error => e
+  warn "\nError: #{e.message}"
+  exit 1
+rescue Interrupt
+  warn "\nInterrupted by user"
+  exit 130
+end

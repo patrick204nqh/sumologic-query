@@ -10,7 +10,9 @@ module Sumologic
   # Handles historical log queries with automatic polling and pagination
   class Client
     API_VERSION = 'v1'
-    DEFAULT_POLL_INTERVAL = 20 # seconds
+    INITIAL_POLL_INTERVAL = 5 # seconds - start fast for small queries
+    MAX_POLL_INTERVAL = 20 # seconds - slow down for large queries
+    POLL_BACKOFF_FACTOR = 1.5 # increase interval by 50% each time
     DEFAULT_TIMEOUT = 300 # seconds (5 minutes)
     MAX_MESSAGES_PER_REQUEST = 10_000
 
@@ -94,7 +96,8 @@ module Sumologic
     def poll_until_complete(job_id, timeout: DEFAULT_TIMEOUT)
       uri = URI("#{@base_url}/search/jobs/#{job_id}")
       start_time = Time.now
-      interval = DEFAULT_POLL_INTERVAL
+      interval = INITIAL_POLL_INTERVAL
+      poll_count = 0
 
       loop do
         raise TimeoutError, "Search job timed out after #{timeout} seconds" if Time.now - start_time > timeout
@@ -107,16 +110,25 @@ module Sumologic
         data = JSON.parse(response.body)
 
         state = data['state']
-        log_info "Job state: #{state} (#{data['messageCount']} messages, #{data['recordCount']} records)"
+        msg_count = data['messageCount']
+        rec_count = data['recordCount']
+        log_info "Job state: #{state} (#{msg_count} messages, #{rec_count} records) [interval: #{interval}s]"
 
         case state
         when 'DONE GATHERING RESULTS'
+          elapsed = Time.now - start_time
+          log_info "Job completed in #{elapsed.round(1)} seconds after #{poll_count + 1} polls"
           return data
         when 'CANCELLED', 'FORCE PAUSED'
           raise Error, "Search job #{state.downcase}"
         end
 
         sleep interval
+        poll_count += 1
+
+        # Adaptive backoff: gradually increase interval for long-running jobs
+        # This reduces API calls while maintaining responsiveness for quick jobs
+        interval = [interval * POLL_BACKOFF_FACTOR, MAX_POLL_INTERVAL].min
       end
     end
 

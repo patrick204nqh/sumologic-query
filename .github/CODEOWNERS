@@ -1,0 +1,24 @@
+# Code Owners for sumologic-query
+# These owners will be requested for review when PRs are opened
+
+# Core library code
+/lib/ @patrick204nqh
+
+# CLI executable
+/bin/ @patrick204nqh
+
+# Tests
+/spec/ @patrick204nqh
+
+# Documentation
+*.md @patrick204nqh
+
+# Workflows and CI/CD
+/.github/ @patrick204nqh
+
+# Gem configuration
+*.gemspec @patrick204nqh
+Gemfile* @patrick204nqh
+
+# Default owner for everything else
+* @patrick204nqh

@@ -2,88 +2,182 @@ name: Release
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - main
+  workflow_dispatch:
 
 jobs:
+  check-version:
+    runs-on: ubuntu-latest
+    outputs:
+      should_release: ${{ steps.compare.outputs.should_release }}
+      current_version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract current version
+        id: version
+        run: |
+          version=$(grep "VERSION = " lib/sumologic/version.rb | sed "s/.*VERSION = '\(.*\)'/\1/")
+          echo "version=$version" >> $GITHUB_OUTPUT
+          echo "📦 Current version in code: $version"
+
+      - name: Get latest release
+        id: latest
+        run: |
+          latest_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          if [ -z "$latest_tag" ]; then
+            echo "version=0.0.0" >> $GITHUB_OUTPUT
+            echo "📭 No previous releases found"
+          else
+            latest_version=${latest_tag#v}
+            echo "version=$latest_version" >> $GITHUB_OUTPUT
+            echo "📌 Latest release: $latest_version"
+          fi
+
+      - name: Compare versions
+        id: compare
+        run: |
+          current="${{ steps.version.outputs.version }}"
+          latest="${{ steps.latest.outputs.version }}"
+
+          echo "Comparing versions:"
+          echo "  Current: $current"
+          echo "  Latest:  $latest"
+
+          if [ "$latest" = "0.0.0" ]; then
+            echo "🎉 First release detected!"
+            echo "should_release=true" >> $GITHUB_OUTPUT
+          elif printf '%s\n%s\n' "$latest" "$current" | sort -V -C; then
+            if [ "$current" != "$latest" ]; then
+              echo "✅ Version increased: $latest → $current"
+              echo "should_release=true" >> $GITHUB_OUTPUT
+            else
+              echo "⏸️  Version unchanged - skipping release"
+              echo "should_release=false" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "⚠️  Version decreased: $latest → $current (skipping)"
+            echo "should_release=false" >> $GITHUB_OUTPUT
+          fi
+
+  test:
+    needs: check-version
+    if: needs.check-version.outputs.should_release == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        ruby: ['2.7', '3.3']
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Ruby ${{ matrix.ruby }}
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          bundler-cache: true
+
+      - name: Install dependencies
+        run: bundle install
+
+      - name: Run tests
+        run: bundle exec rspec
+
+      - name: Run RuboCop
+        run: bundle exec rubocop
+
   release:
+    needs: [check-version, test]
+    if: needs.check-version.outputs.should_release == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: write
-
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-    - name: Set up Ruby
-      uses: ruby/setup-ruby@v1
-      with:
-        ruby-version: '3.3'
-        bundler-cache: true
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
 
-    - name: Install dependencies
-      run: bundle install
+      - name: Build gem
+        run: |
+          bundle install
+          gem build sumologic-query.gemspec
+          ls -lh *.gem
 
-    - name: Run tests
-      run: bundle exec rspec
+      - name: Create git tag
+        id: tag
+        run: |
+          version="${{ needs.check-version.outputs.current_version }}"
 
-    - name: Build gem
-      run: gem build sumologic-query.gemspec
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
 
-    - name: Extract version
-      id: version
-      run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+          git tag -a "v${version}" -m "Release v${version}
 
-    - name: Publish to RubyGems
-      env:
-        GEM_HOST_API_KEY: ${{ secrets.RUBYGEMS_API_KEY }}
-      run: |
-        mkdir -p ~/.gem
-        cat << EOF > ~/.gem/credentials
-        ---
-        :rubygems_api_key: ${GEM_HOST_API_KEY}
-        EOF
-        chmod 0600 ~/.gem/credentials
-        gem push *.gem
+          Auto-released by GitHub Actions
+          All tests passed ✅"
 
-    - name: Generate Release Notes
-      id: release_notes
-      uses: actions/github-script@v7
-      with:
-        script: |
-          const { data } = await github.rest.repos.generateReleaseNotes({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            tag_name: context.ref.replace('refs/tags/', ''),
-          });
-          return data.body;
-        result-encoding: string
+          git push origin "v${version}"
+          echo "tag_name=v${version}" >> $GITHUB_OUTPUT
 
-    - name: Create GitHub Release
-      uses: softprops/action-gh-release@v1
-      with:
-        files: '*.gem'
-        body: |
-          ## Installation
+      - name: Generate release notes
+        id: notes
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data } = await github.rest.repos.generateReleaseNotes({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: '${{ steps.tag.outputs.tag_name }}',
+            });
+            return data.body;
+          result-encoding: string
 
-          ```bash
-          # Via RubyGems
-          gem install sumologic-query
+      - name: Publish to RubyGems
+        env:
+          GEM_HOST_API_KEY: ${{ secrets.RUBYGEMS_API_KEY }}
+        run: |
+          mkdir -p ~/.gem
+          cat << EOF > ~/.gem/credentials
+          ---
+          :rubygems_api_key: ${GEM_HOST_API_KEY}
+          EOF
+          chmod 0600 ~/.gem/credentials
+          gem push *.gem
+          echo "✅ Published to RubyGems"
 
-          # Via Homebrew
-          brew tap patrick204nqh/tap
-          brew install sumologic-query
-          ```
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.tag.outputs.tag_name }}
+          files: '*.gem'
+          body: |
+            ## Installation
 
-          ## What's Changed
+            ```bash
+            # Via RubyGems
+            gem install sumologic-query
 
-          ${{ steps.release_notes.outputs.result }}
+            # Via Homebrew (available after tap updates)
+            brew tap patrick204nqh/tap
+            brew install sumologic-query
+            ```
 
-          ## Links
+            ## What's Changed
 
-          - 📦 [RubyGems Package](https://rubygems.org/gems/sumologic-query/versions/${{ steps.version.outputs.version }})
-          - 📖 [Documentation](https://github.com/patrick204nqh/sumologic-query#readme)
-          - 🐛 [Report Issues](https://github.com/patrick204nqh/sumologic-query/issues)
+            ${{ steps.notes.outputs.result }}
 
-          **Full Changelog**: https://github.com/patrick204nqh/sumologic-query/compare/v${{ steps.version.outputs.version }}...HEAD
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            ## Links
+
+            - 📦 [RubyGems Package](https://rubygems.org/gems/sumologic-query/versions/${{ needs.check-version.outputs.current_version }})
+            - 📖 [Documentation](https://github.com/patrick204nqh/sumologic-query#readme)
+            - 🐛 [Report Issues](https://github.com/patrick204nqh/sumologic-query/issues)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

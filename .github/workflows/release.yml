@@ -29,6 +29,32 @@ jobs:
     - name: Build gem
       run: gem build sumologic-query.gemspec
 
+    - name: Extract version
+      id: version
+      run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+    - name: Extract changelog
+      id: changelog
+      run: |
+        # Extract the section for this version from CHANGELOG.md
+        version=${{ steps.version.outputs.version }}
+        echo "Extracting changelog for version $version"
+
+        # Get content between this version and the next version header
+        awk "/^## \[$version\]/,/^## \[/{if(/^## \[/ && !/^## \[$version\]/)exit;print}" CHANGELOG.md > current_changelog.md
+
+        # If changelog is empty, use default message
+        if [ ! -s current_changelog.md ]; then
+          echo "See [CHANGELOG.md](https://github.com/patrick204nqh/sumologic-query/blob/main/CHANGELOG.md) for details." > current_changelog.md
+        fi
+
+        # Set multiline output
+        {
+          echo 'notes<<EOF'
+          cat current_changelog.md
+          echo EOF
+        } >> $GITHUB_OUTPUT
+
     - name: Publish to RubyGems
       env:
         GEM_HOST_API_KEY: ${{ secrets.RUBYGEMS_API_KEY }}
@@ -45,6 +71,29 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         files: '*.gem'
-        generate_release_notes: true
+        body: |
+          # 🚀 sumologic-query v${{ steps.version.outputs.version }}
+
+          ## Installation
+
+          ```bash
+          # Via RubyGems
+          gem install sumologic-query
+
+          # Via Homebrew
+          brew tap patrick204nqh/tap
+          brew install sumologic-query
+          ```
+
+          ## What's Changed
+
+          ${{ steps.changelog.outputs.notes }}
+
+          ## Links
+
+          - 📦 [RubyGems Package](https://rubygems.org/gems/sumologic-query/versions/${{ steps.version.outputs.version }})
+          - 📖 [Documentation](https://github.com/patrick204nqh/sumologic-query#readme)
+          - 🐛 [Report Issues](https://github.com/patrick204nqh/sumologic-query/issues)
+        generate_release_notes: false
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -39,3 +39,6 @@ Thumbs.db
 # env files
 .env
 .envrc
+
+# Homebrew formula (lives in homebrew-tap repo)
+Formula/

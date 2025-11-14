@@ -26,12 +26,12 @@
 
 - List all collectors:
 
-`sumo-query collectors`
+`sumo-query list-collectors`
 
 - List all sources:
 
-`sumo-query sources`
+`sumo-query list-sources`
 
 - List sources and save to file:
 
-`sumo-query sources --output {{path/to/sources.json}}`
+`sumo-query list-sources --output {{path/to/sources.json}}`

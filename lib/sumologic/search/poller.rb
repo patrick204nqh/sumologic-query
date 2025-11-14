@@ -11,6 +11,7 @@ module Sumologic
 
       # Poll until job completes or times out
       # Returns final job status data
+      # Starts polling immediately, then applies exponential backoff
       def poll(job_id)
         start_time = Time.now
         interval = @config.initial_poll_interval
@@ -32,6 +33,7 @@ module Sumologic
             raise Error, "Search job #{state.downcase}"
           end
 
+          # Sleep after checking status (not before first check)
           sleep interval
           poll_count += 1
           interval = calculate_next_interval(interval)

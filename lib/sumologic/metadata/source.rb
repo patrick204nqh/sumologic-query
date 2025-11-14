@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative 'parallel_fetcher'
+
 module Sumologic
   module Metadata
     # Handles source metadata operations
@@ -7,6 +9,7 @@ module Sumologic
       def initialize(http_client:, collector_client:)
         @http = http_client
         @collector_client = collector_client
+        @parallel_fetcher = ParallelFetcher.new(max_threads: 10)
       end
 
       # List sources for a specific collector
@@ -26,30 +29,15 @@ module Sumologic
 
       # List all sources from all collectors
       # Returns array of hashes with collector info and their sources
+      # Uses parallel fetching with thread pool for better performance
       def list_all
         collectors = @collector_client.list
-        result = []
+        active_collectors = collectors.select { |c| c['alive'] }
 
-        collectors.each do |collector|
-          next unless collector['alive'] # Skip offline collectors
+        log_info "Fetching sources for #{active_collectors.size} active collectors in parallel..."
 
-          collector_id = collector['id']
-          collector_name = collector['name']
-
-          log_info "Fetching sources for collector: #{collector_name} (#{collector_id})"
-
-          sources = list(collector_id: collector_id)
-
-          result << {
-            'collector' => {
-              'id' => collector_id,
-              'name' => collector_name,
-              'collectorType' => collector['collectorType']
-            },
-            'sources' => sources
-          }
-        rescue StandardError => e
-          log_error "Failed to fetch sources for collector #{collector_name}: #{e.message}"
+        result = @parallel_fetcher.fetch_all(active_collectors) do |collector|
+          fetch_collector_sources(collector)
         end
 
         log_info "Total: #{result.size} collectors with sources"
@@ -59,6 +47,27 @@ module Sumologic
       end
 
       private
+
+      # Fetch sources for a single collector
+      def fetch_collector_sources(collector)
+        collector_id = collector['id']
+        collector_name = collector['name']
+
+        log_info "Fetching sources for collector: #{collector_name} (#{collector_id})"
+        sources = list(collector_id: collector_id)
+
+        {
+          'collector' => {
+            'id' => collector_id,
+            'name' => collector_name,
+            'collectorType' => collector['collectorType']
+          },
+          'sources' => sources
+        }
+      rescue StandardError => e
+        log_error "Failed to fetch sources for collector #{collector_name}: #{e.message}"
+        nil
+      end
 
       def log_info(message)
         warn "[Sumologic::Metadata::Source] #{message}" if ENV['SUMO_DEBUG'] || $DEBUG

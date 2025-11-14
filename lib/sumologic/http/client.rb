@@ -3,27 +3,36 @@
 require 'net/http'
 require 'json'
 require 'uri'
+require_relative 'connection_pool'
 
 module Sumologic
   module Http
     # Handles HTTP communication with Sumo Logic API
     # Responsibilities: request execution, error handling, SSL configuration
+    # Uses connection pooling for thread-safe parallel requests
     class Client
-      READ_TIMEOUT = 60
-      OPEN_TIMEOUT = 10
-
       def initialize(base_url:, authenticator:)
         @base_url = base_url
         @authenticator = authenticator
+        @connection_pool = ConnectionPool.new(base_url: base_url, max_connections: 10)
       end
 
       # Execute HTTP request with error handling
+      # Uses connection pool for thread-safe parallel execution
       def request(method:, path:, body: nil, query_params: nil)
         uri = build_uri(path, query_params)
         request = build_request(method, uri, body)
 
         response = execute_request(uri, request)
         handle_response(response)
+      rescue Errno::ECONNRESET, Errno::EPIPE, EOFError, Net::HTTPBadResponse => e
+        # Connection error - raise for retry at higher level
+        raise Error, "Connection error: #{e.message}"
+      end
+
+      # Close all connections in the pool
+      def close_all_connections
+        @connection_pool.close_all
       end
 
       private
@@ -55,12 +64,9 @@ module Sumologic
       end
 
       def execute_request(uri, request)
-        http = Net::HTTP.new(uri.host, uri.port)
-        http.use_ssl = true
-        http.read_timeout = READ_TIMEOUT
-        http.open_timeout = OPEN_TIMEOUT
-
-        http.request(request)
+        @connection_pool.with_connection(uri) do |http|
+          http.request(request)
+        end
       end
 
       def handle_response(response)

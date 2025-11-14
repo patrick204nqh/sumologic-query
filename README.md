@@ -212,6 +212,7 @@ Query execution time depends on data volume:
 
 ## Documentation
 
+- **[Quick Reference (tldr)](docs/tldr.md)** - Concise command examples in tldr format
 - **[Query Examples](examples/queries.md)** - Common query patterns and use cases
 - **[API Reference](docs/api-reference.md)** - Complete Ruby library documentation
 - **[Architecture](docs/architecture.md)** - How the tool works internally

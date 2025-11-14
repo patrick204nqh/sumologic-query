@@ -39,6 +39,8 @@ Gem::Specification.new do |spec|
   # Runtime dependencies
   # base64 is required for Ruby 3.4+ but was part of stdlib before
   spec.add_dependency 'base64', '~> 0.1'
+  # thor for CLI command routing and organization
+  spec.add_dependency 'thor', '~> 1.3'
 
   # Development dependencies
   spec.add_development_dependency 'rake', '~> 13.0'

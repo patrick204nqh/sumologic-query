@@ -89,6 +89,12 @@ module Sumologic
       end
     end
 
+    desc 'version', 'Show version information'
+    def version
+      puts "sumo-query version #{Sumologic::VERSION}"
+    end
+    map %w[-v --version] => :version
+
     default_task :search
 
     private

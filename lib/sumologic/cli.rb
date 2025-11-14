@@ -29,7 +29,7 @@ module Sumologic
     DESC
     option :query, type: :string, required: true, aliases: '-q', desc: 'Search query'
     option :from, type: :string, required: true, aliases: '-f', desc: 'Start time (ISO 8601)'
-    option :to, type: :string, required: :true, aliases: '-t', desc: 'End time (ISO 8601)'
+    option :to, type: :string, required: true, aliases: '-t', desc: 'End time (ISO 8601)'
     option :time_zone, type: :string, default: 'UTC', aliases: '-z', desc: 'Time zone'
     option :limit, type: :numeric, aliases: '-l', desc: 'Limit number of messages'
     def search

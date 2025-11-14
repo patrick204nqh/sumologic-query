@@ -3,9 +3,8 @@
 module Sumologic
   # Centralized configuration for Sumo Logic client
   class Configuration
-    attr_accessor :access_id, :access_key, :deployment
-    attr_accessor :timeout, :initial_poll_interval, :max_poll_interval
-    attr_accessor :poll_backoff_factor, :max_messages_per_request
+    attr_accessor :access_id, :access_key, :deployment, :timeout, :initial_poll_interval, :max_poll_interval,
+                  :poll_backoff_factor, :max_messages_per_request
 
     API_VERSION = 'v1'
 

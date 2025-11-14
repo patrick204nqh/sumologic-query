@@ -1,90 +1,73 @@
 # Contributing to Sumo Logic Query Tool
 
-First off, thank you for considering contributing to sumologic-query! It's people like you that make this tool better for everyone.
+Thank you for considering contributing! This guide will help you get started.
 
-## Code of Conduct
-
-This project and everyone participating in it is governed by our [Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code.
-
-## How Can I Contribute?
+## How to Contribute
 
 ### Reporting Bugs
 
-Before creating bug reports, please check the existing issues to avoid duplicates. When you create a bug report, include as many details as possible:
+Check existing issues first, then create a new one with:
 
-- **Use a clear and descriptive title**
-- **Describe the exact steps to reproduce the problem**
-- **Provide specific examples** (queries, time ranges, error messages)
-- **Describe the behavior you observed** and what you expected to see
-- **Include your environment details**: Ruby version, OS, Sumo Logic deployment
+- **Clear title** describing the issue
+- **Steps to reproduce** the problem
+- **Expected vs actual behavior**
+- **Environment details**: Ruby version, OS, deployment
 
-**Example bug report:**
-
+**Example:**
 ```markdown
-### Description
-CLI times out even with small time ranges
+### Bug: Timeout with small time range
 
-### Steps to Reproduce
-1. Run: `sumo-query --query 'error' --from '2025-11-13T14:00:00' --to '2025-11-13T14:05:00'`
+**Steps:**
+1. Run: `sumo-query search --query 'error' --from '2025-11-13T14:00:00' --to '2025-11-13T14:05:00'`
 2. Wait for timeout
 
-### Expected Behavior
-Should return results within 1-2 minutes
+**Expected:** Results within 1-2 minutes
+**Actual:** Times out after 5 minutes
 
-### Actual Behavior
-Times out after 5 minutes
-
-### Environment
-- Ruby: 3.3.0
-- OS: macOS 14.0
-- Deployment: us2
+**Environment:** Ruby 3.3.0, macOS 14.0, us2 deployment
 ```
 
-### Suggesting Enhancements
+### Suggesting Features
 
-Enhancement suggestions are tracked as GitHub issues. When creating an enhancement suggestion:
-
-- **Use a clear and descriptive title**
-- **Provide a detailed description** of the suggested enhancement
-- **Explain why this enhancement would be useful**
-- **List examples** of how it would be used
+Open an issue with:
+- Clear description of the feature
+- Why it would be useful
+- Example use cases
 
 ### Pull Requests
 
-1. **Fork the repository** and create your branch from `main`
-2. **Make your changes**:
-   - Follow the Ruby style guide (enforced by RuboCop)
-   - Add tests for new functionality
-   - Update documentation as needed
-3. **Ensure tests pass**: `bundle exec rake`
-4. **Write a clear commit message**:
-   ```
-   Short (50 chars or less) summary
+1. Fork and create a branch from `main`
+2. Make your changes following our style guide
+3. Add tests for new functionality
+4. Update documentation
+5. Ensure `bundle exec rake` passes
+6. Write a clear commit message
+7. Submit the pull request
 
-   More detailed explanation if needed. Wrap at 72 characters.
+**Commit message format:**
+```
+Short summary (50 chars or less)
 
-   - Bullet points are okay
-   - Use present tense ("Add feature" not "Added feature")
-   - Reference issues: "Fixes #123"
-   ```
-5. **Create the pull request**
+Detailed explanation if needed (wrap at 72 chars).
+Use present tense: "Add feature" not "Added feature"
+
+Fixes #123
+```
 
 ## Development Setup
 
 ### Prerequisites
 
-- Ruby 2.7 or higher
+- Ruby 2.7+
 - Bundler
-- Sumo Logic account with API access (for manual testing)
+- Sumo Logic account (for testing)
 
-### Setup Steps
+### Quick Start
 
 ```bash
-# Clone your fork
+# Clone and install
 git clone https://github.com/YOUR_USERNAME/sumologic-query.git
 cd sumologic-query
-
-# Install dependencies
 bundle install
 
 # Run tests
@@ -97,26 +80,23 @@ bundle exec rubocop
 bundle exec rake
 ```
 
-### Running the CLI Locally
+### Testing Locally
 
 ```bash
-# Set up credentials
+# Set credentials
 export SUMO_ACCESS_ID="your_access_id"
 export SUMO_ACCESS_KEY="your_access_key"
 export SUMO_DEPLOYMENT="us2"
 
-# Search command
+# Test commands
 bundle exec bin/sumo-query search --query "error" \
   --from "2025-11-13T14:00:00" \
   --to "2025-11-13T15:00:00"
 
-# Collectors command
 bundle exec bin/sumo-query collectors
-
-# Sources command
 bundle exec bin/sumo-query sources
 
-# With debug output
+# Debug mode
 SUMO_DEBUG=1 bundle exec bin/sumo-query search --query "error" \
   --from "2025-11-13T14:00:00" \
   --to "2025-11-13T15:00:00"
@@ -128,33 +108,31 @@ SUMO_DEBUG=1 bundle exec bin/sumo-query search --query "error" \
 # All tests
 bundle exec rspec
 
-# Specific test file
+# Specific files
 bundle exec rspec spec/sumologic/client_spec.rb
-
-# Specific module
-bundle exec rspec spec/sumologic/configuration_spec.rb
 bundle exec rspec spec/sumologic/http/
 
-# With coverage and documentation format
+# With documentation format
 bundle exec rspec --format documentation
 
-# Run linter
+# Linter
 bundle exec rubocop
+bundle exec rubocop -A  # Auto-fix
 
-# Run all checks (tests + linter)
+# All checks
 bundle exec rake
 ```
 
-### Testing Individual Components
+### Interactive Testing
 
-```ruby
-# Test configuration
+```bash
 bundle exec irb
 require './lib/sumologic'
+
+# Test configuration
 config = Sumologic::Configuration.new(
   access_id: ENV['SUMO_ACCESS_ID'],
-  access_key: ENV['SUMO_ACCESS_KEY'],
-  deployment: 'us2'
+  access_key: ENV['SUMO_ACCESS_KEY']
 )
 puts config.api_url
 
@@ -169,19 +147,16 @@ puts collectors.first
 
 ## Code Style
 
-This project uses RuboCop to enforce Ruby style guidelines:
+We use RuboCop for style enforcement:
 
 ```bash
-# Check style
-bundle exec rubocop
-
-# Auto-fix issues
-bundle exec rubocop -A
+bundle exec rubocop        # Check
+bundle exec rubocop -A     # Auto-fix
 ```
 
-Key style points:
-- Use frozen string literals
-- 2 spaces for indentation
+**Key conventions:**
+- Frozen string literals
+- 2 spaces indentation
 - 120 character line length
 - Descriptive variable names
 - Comments for complex logic
@@ -189,100 +164,75 @@ Key style points:
 ## Project Structure
 
 ```
-sumologic-query/
-├── lib/
-│   ├── sumologic.rb                    # Main entry point & error classes
-│   └── sumologic/
-│       ├── version.rb                  # Version constant
-│       ├── configuration.rb            # Configuration management
-│       ├── client.rb                   # Main client facade
-│       ├── cli.rb                      # Thor-based CLI
-│       ├── http/
-│       │   ├── authenticator.rb        # API authentication
-│       │   └── client.rb               # HTTP request handling
-│       ├── search/
-│       │   ├── job.rb                  # Search job creation
-│       │   ├── poller.rb               # Job status polling
-│       │   └── paginator.rb            # Result pagination
-│       └── metadata/
-│           ├── collector.rb            # Collector operations
-│           └── source.rb               # Source operations
-├── bin/
-│   └── sumo-query                      # CLI executable
-├── spec/
-│   ├── spec_helper.rb                  # Test configuration
-│   └── sumologic/
-│       ├── client_spec.rb              # Client tests
-│       ├── configuration_spec.rb       # Configuration tests
-│       └── http/
-│           └── authenticator_spec.rb   # HTTP auth tests
-├── docs/
-│   ├── examples.md                     # Query examples
-│   ├── architecture.md                 # Architecture docs
-│   ├── api-reference.md                # API reference
-│   └── troubleshooting.md              # Troubleshooting guide
-└── ...
+lib/sumologic/
+├── configuration.rb       # Config management
+├── client.rb             # Main facade
+├── cli.rb                # CLI interface
+├── http/                 # HTTP layer
+├── search/               # Search operations
+└── metadata/             # Metadata operations
+
+spec/                     # Tests
+examples/queries.md       # Query examples
+docs/                     # Reference docs
 ```
 
 ## Design Principles
 
-1. **Simplicity First**: Keep the tool focused on querying logs and metadata
-2. **Minimal Dependencies**: Use stdlib + Thor for CLI (gracefully degraded)
-3. **Read-Only**: No write operations to Sumo Logic
-4. **Clear Errors**: User-friendly error messages with context
-5. **Fast Execution**: Efficient API usage and pagination
-6. **Separation of Concerns**: Modular architecture (HTTP, Search, Metadata, CLI)
-7. **Testability**: Loosely coupled components with dependency injection
+1. **Simplicity** - Focus on logs and metadata
+2. **Minimal dependencies** - Stdlib + Thor
+3. **Read-only** - No write operations
+4. **Clear errors** - Helpful error messages
+5. **Modular** - Separation of concerns
+6. **Testable** - Loose coupling
 
-## Adding New Features
+## Adding Features
 
-Before adding a new feature:
+Before implementing:
 
-1. **Open an issue** to discuss the feature
+1. **Open an issue** to discuss
 2. **Get feedback** from maintainers
-3. **Keep it simple** - does it fit the tool's purpose?
-4. **Write tests** - maintain or improve test coverage
-5. **Update docs** - README and code comments
-
-## Testing Philosophy
-
-- **Unit tests**: Test individual methods and classes
-- **Integration tests**: Test API interactions (mocked)
-- **No external calls**: Don't hit real Sumo Logic API in tests
-- **Fast execution**: Tests should run in < 5 seconds
+3. **Keep it simple** - fits the tool's purpose?
+4. **Write tests** - maintain coverage
+5. **Update docs** - README and relevant docs
 
 ## Documentation
 
-When adding new features:
+When adding features, update:
 
-1. Update appropriate documentation:
-   - Main README.md for high-level changes
-   - docs/examples.md for new query patterns
-   - docs/api-reference.md for API changes
-   - docs/architecture.md for architectural changes
-2. Add code comments for complex logic
-3. Update CHANGELOG.md
-4. Add tests with documentation
+- `README.md` - If it affects quick start or main usage
+- `examples/queries.md` - If adding query patterns
+- `docs/api-reference.md` - If changing API
+- `docs/architecture.md` - If changing design
+- `CHANGELOG.md` - Always
+
+Keep docs simple and focused on key concepts.
+
+## Testing Philosophy
+
+- **Unit tests** - Individual methods/classes
+- **Mocked APIs** - No real Sumo Logic calls
+- **Fast** - Tests run in < 5 seconds
+- **Clear** - Easy to understand failures
 
 ## Release Process
 
-Maintainers will handle releases:
+Maintainers handle releases:
 
 1. Update `lib/sumologic/version.rb`
 2. Update `CHANGELOG.md`
-3. Create git tag: `git tag v1.0.0`
-4. Push tag: `git push --tags`
-5. GitHub Actions will build and publish gem
+3. Create tag: `git tag v1.0.0`
+4. Push: `git push --tags`
+5. GitHub Actions publishes gem
 
 ## Getting Help
 
-- **Issues**: [GitHub Issues](https://github.com/patrick204nqh/sumologic-query/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/patrick204nqh/sumologic-query/discussions)
+- [GitHub Issues](https://github.com/patrick204nqh/sumologic-query/issues)
+- [GitHub Discussions](https://github.com/patrick204nqh/sumologic-query/discussions)
 
 ## Recognition
 
-Contributors will be recognized in:
-- README.md (Contributors section)
+Contributors are recognized in:
 - Release notes
 - CHANGELOG.md
 

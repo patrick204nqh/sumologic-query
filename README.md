@@ -116,7 +116,7 @@ sumo-query sources [--output FILE]
 
 Lists all sources from active collectors.
 
-**See [docs/examples.md](docs/examples.md) for more query patterns and examples.**
+**See [examples/queries.md](examples/queries.md) for more query patterns and examples.**
 
 ## Ruby Library Usage
 
@@ -212,7 +212,7 @@ Query execution time depends on data volume:
 
 ## Documentation
 
-- **[Examples](docs/examples.md)** - Common query patterns and use cases
+- **[Query Examples](examples/queries.md)** - Common query patterns and use cases
 - **[API Reference](docs/api-reference.md)** - Complete Ruby library documentation
 - **[Architecture](docs/architecture.md)** - How the tool works internally
 - **[Troubleshooting](docs/troubleshooting.md)** - Common issues and solutions

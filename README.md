@@ -1,19 +1,20 @@
 # Sumo Logic Query Tool
 
-> A lightweight Ruby CLI for querying Sumo Logic logs quickly. Simple, fast, read-only access to your logs.
+> A lightweight Ruby CLI for querying Sumo Logic logs and metadata. Simple, fast, read-only access to your logs.
 
 [![Gem Version](https://badge.fury.io/rb/sumologic-query.svg)](https://badge.fury.io/rb/sumologic-query)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## Why This Tool?
 
-- **Zero dependencies**: Uses only Ruby stdlib - no external gems required
+- **Minimal dependencies**: Uses only Ruby stdlib + Thor for CLI
 - **Fast queries**: Efficient polling and automatic pagination
 - **Simple interface**: Just query, get results, done
 - **Read-only**: No write operations, perfect for safe log access
-- **Lightweight**: ~300 lines of code total
+- **Modular architecture**: Clean separation of concerns (HTTP, Search, Metadata)
+- **Metadata support**: List collectors and sources alongside log queries
 
-All existing Ruby Sumo Logic gems are unmaintained (2-9 years dormant). This tool provides a fresh, minimal approach focused solely on querying logs.
+All existing Ruby Sumo Logic gems are unmaintained (2-9 years dormant). This tool provides a fresh, minimal approach focused on querying logs and metadata.
 
 ## Installation
 
@@ -48,7 +49,7 @@ Export your Sumo Logic API credentials:
 ```bash
 export SUMO_ACCESS_ID="your_access_id"
 export SUMO_ACCESS_KEY="your_access_key"
-export SUMO_DEPLOYMENT="us2"  # Optional: us1, us2 (default), eu, au
+export SUMO_DEPLOYMENT="us2"  # Optional: us1, us2 (default), eu, au, etc.
 ```
 
 **Getting credentials:**
@@ -60,18 +61,27 @@ export SUMO_DEPLOYMENT="us2"  # Optional: us1, us2 (default), eu, au
 ### 2. Run Your First Query
 
 ```bash
-sumo-query --query 'error' \
+# Search logs
+sumo-query search --query 'error' \
   --from '2025-11-13T14:00:00' \
   --to '2025-11-13T15:00:00' \
   --limit 10
+
+# List collectors
+sumo-query collectors
+
+# List sources
+sumo-query sources
 ```
 
 ## Usage
 
-### Basic Command Structure
+The CLI provides three main commands:
+
+### Search Logs
 
 ```bash
-sumo-query --query "YOUR_QUERY" \
+sumo-query search --query "YOUR_QUERY" \
   --from "START_TIME" \
   --to "END_TIME" \
   [--output FILE] \
@@ -79,87 +89,85 @@ sumo-query --query "YOUR_QUERY" \
   [--time-zone TZ]
 ```
 
-### Required Options
-
+**Required options:**
 - `-q, --query QUERY` - Sumo Logic query string
-- `-f, --from TIME` - Start time in ISO 8601 format
-- `-t, --to TIME` - End time in ISO 8601 format
+- `-f, --from TIME` - Start time (ISO 8601 format)
+- `-t, --to TIME` - End time (ISO 8601 format)
 
-### Optional Options
-
+**Optional options:**
 - `-z, --time-zone TZ` - Time zone (default: UTC)
 - `-l, --limit N` - Limit number of messages
-- `-o, --output FILE` - Save results to file (default: stdout)
+- `-o, --output FILE` - Save to file (default: stdout)
 - `-d, --debug` - Enable debug output
-- `-h, --help` - Show help message
-- `-v, --version` - Show version
 
-## Common Query Patterns
-
-### Error Analysis
+### List Collectors
 
 ```bash
-# Find all errors in a time window
-sumo-query --query 'error' \
-  --from '2025-11-13T14:00:00' \
-  --to '2025-11-13T15:00:00' \
-  --output errors.json
-
-# Error timeline with 5-minute buckets
-sumo-query --query 'error | timeslice 5m | count by _timeslice' \
-  --from '2025-11-13T14:00:00' \
-  --to '2025-11-13T15:00:00'
+sumo-query collectors [--output FILE]
 ```
 
-### Text Search
+Lists all collectors in your account with status and metadata.
+
+### List Sources
 
 ```bash
-# Search for specific text
-sumo-query --query '"connection timeout"' \
-  --from '2025-11-13T14:00:00' \
-  --to '2025-11-13T15:00:00'
-
-# Case-insensitive search
-sumo-query --query 'timeout OR failure OR exception' \
-  --from '2025-11-13T14:00:00' \
-  --to '2025-11-13T15:00:00'
+sumo-query sources [--output FILE]
 ```
 
-### Filtering by Source
+Lists all sources from active collectors.
 
-```bash
-# Filter by source category
-sumo-query --query '_sourceCategory=prod/api error' \
-  --from '2025-11-13T14:00:00' \
-  --to '2025-11-13T15:00:00'
+**See [docs/examples.md](docs/examples.md) for more query patterns and examples.**
 
-# Multiple sources
-sumo-query --query '(_sourceCategory=prod/api OR _sourceCategory=prod/web) AND error' \
-  --from '2025-11-13T14:00:00' \
-  --to '2025-11-13T15:00:00'
+## Ruby Library Usage
+
+Use the library directly in your Ruby code:
+
+```ruby
+require 'sumologic'
+
+# Initialize client
+client = Sumologic::Client.new(
+  access_id: ENV['SUMO_ACCESS_ID'],
+  access_key: ENV['SUMO_ACCESS_KEY'],
+  deployment: 'us2'
+)
+
+# Search logs
+results = client.search(
+  query: 'error',
+  from_time: '2025-11-13T14:00:00',
+  to_time: '2025-11-13T15:00:00',
+  time_zone: 'UTC',
+  limit: 1000
+)
+
+results.each do |message|
+  puts message['map']['message']
+end
+
+# List collectors
+collectors = client.list_collectors
+
+# List all sources
+sources = client.list_all_sources
 ```
 
-### Aggregation Queries
+**See [docs/api-reference.md](docs/api-reference.md) for complete API documentation.**
+
+## Time Formats
+
+Use ISO 8601 format for timestamps:
 
 ```bash
-# Count by field
-sumo-query --query '* | count by status_code' \
-  --from '2025-11-13T14:00:00' \
-  --to '2025-11-13T15:00:00'
+# UTC timestamps (default)
+--from "2025-11-13T14:30:00" --to "2025-11-13T15:00:00"
 
-# Top 10 slowest requests
-sumo-query --query 'duration_ms > 1000 | sort by duration_ms desc | limit 10' \
-  --from '2025-11-13T14:00:00' \
-  --to '2025-11-13T15:00:00'
-```
+# With timezone
+--from "2025-11-13T14:30:00" --time-zone "America/New_York"
 
-### Parsing and Field Extraction
-
-```bash
-# Parse specific fields
-sumo-query --query '* | parse "user_id=* " as user_id | count by user_id' \
-  --from '2025-11-13T14:00:00' \
-  --to '2025-11-13T15:00:00'
+# Using shell helpers
+--from "$(date -u -v-1H '+%Y-%m-%dT%H:%M:%S')"  # 1 hour ago
+--to "$(date -u '+%Y-%m-%dT%H:%M:%S')"          # now
 ```
 
 ## Output Format
@@ -186,155 +194,51 @@ Results are returned as JSON:
 }
 ```
 
-## Time Formats
-
-Use ISO 8601 format for timestamps:
-
-```bash
-# UTC timestamps (default)
---from "2025-11-13T14:30:00"
---to "2025-11-13T15:00:00"
-
-# With timezone
---from "2025-11-13T14:30:00" --time-zone "America/New_York"
-
-# Alternative: Relative times (in your shell)
---from "$(date -u -v-1H '+%Y-%m-%dT%H:%M:%S')"  # 1 hour ago
---to "$(date -u '+%Y-%m-%dT%H:%M:%S')"         # now
-```
-
 ## Performance
 
 Query execution time depends on data volume:
 
-- **Small queries** (<10K messages): ~30-60 seconds
-- **Medium queries** (10K-100K): ~1-2 minutes
-- **Large queries** (100K+): ~2-5 minutes
+| Messages | Typical Time |
+|----------|--------------|
+| < 10K | 30-60 seconds |
+| 10K-100K | 1-2 minutes |
+| 100K+ | 2-5 minutes |
 
-Default timeout: 5 minutes
-
-To improve performance:
+**Tips for faster queries:**
 - Narrow your time range
-- Add specific `_sourceCategory` filters
+- Add `_sourceCategory` filters
 - Use `--limit` to cap results
-- Use aggregation queries instead of fetching raw messages
+- Use aggregation queries instead of raw messages
 
-## Troubleshooting
+## Documentation
 
-### Authentication Error
-
-```
-Error: SUMO_ACCESS_ID not set
-```
-
-**Solution**: Export your credentials:
-```bash
-export SUMO_ACCESS_ID="your_access_id"
-export SUMO_ACCESS_KEY="your_access_key"
-```
-
-### Timeout Error
-
-```
-Timeout Error: Search job timed out after 300 seconds
-```
-
-**Solutions**:
-- Reduce time range
-- Add more specific filters (`_sourceCategory`, `_sourceName`)
-- Use `--limit` to cap results
-- Consider using aggregation instead of raw messages
-
-### Empty Results
-
-```json
-{
-  "message_count": 0,
-  "messages": []
-}
-```
-
-**Check**:
-- Time range matches your expected data
-- Query syntax is valid (test in Sumo Logic UI first)
-- Source categories are correct
-- Time zone is correct (default is UTC)
-
-### Rate Limit Error
-
-```
-HTTP 429: Rate limit exceeded
-```
-
-**Solution**: Wait 1-2 minutes between queries. Sumo Logic enforces rate limits per account.
+- **[Examples](docs/examples.md)** - Common query patterns and use cases
+- **[API Reference](docs/api-reference.md)** - Complete Ruby library documentation
+- **[Architecture](docs/architecture.md)** - How the tool works internally
+- **[Troubleshooting](docs/troubleshooting.md)** - Common issues and solutions
 
 ## Development
 
-### Running Tests
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, testing, and contribution guidelines.
+
+Quick start:
 
 ```bash
+# Clone and install
+git clone https://github.com/patrick204nqh/sumologic-query.git
+cd sumologic-query
 bundle install
-bundle exec rake spec
-```
 
-### Code Quality
+# Run tests
+bundle exec rspec
 
-```bash
+# Run linter
 bundle exec rubocop
-bundle exec rubocop -A  # Auto-fix issues
-```
 
-### Running Locally
-
-```bash
-# Without installing
-bundle exec bin/sumo-query --query "error" \
+# Test locally
+bundle exec bin/sumo-query search --query "error" \
   --from "2025-11-13T14:00:00" \
   --to "2025-11-13T15:00:00"
-
-# With debug output
-SUMO_DEBUG=1 bundle exec bin/sumo-query --query "error" \
-  --from "2025-11-13T14:00:00" \
-  --to "2025-11-13T15:00:00"
-```
-
-## How It Works
-
-This tool uses the Sumo Logic Search Job API:
-
-1. **Create Job** - POST to `/api/v1/search/jobs` with your query
-2. **Poll Status** - GET `/api/v1/search/jobs/:id` every 20 seconds until complete
-3. **Fetch Messages** - GET `/api/v1/search/jobs/:id/messages` (automatically paginated)
-4. **Clean Up** - DELETE `/api/v1/search/jobs/:id`
-
-All steps are handled automatically. You just provide the query and get results.
-
-## API Reference
-
-### Ruby Library Usage
-
-You can also use the library directly in your Ruby code:
-
-```ruby
-require 'sumologic'
-
-client = Sumologic::Client.new(
-  access_id: 'your_access_id',
-  access_key: 'your_access_key',
-  deployment: 'us2'
-)
-
-results = client.search(
-  query: 'error',
-  from_time: '2025-11-13T14:00:00',
-  to_time: '2025-11-13T15:00:00',
-  time_zone: 'UTC',
-  limit: 1000
-)
-
-results.each do |message|
-  puts message['map']['message']
-end
 ```
 
 ## Contributing
@@ -351,17 +255,17 @@ Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for det
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
+## Support
+
+- **Issues**: [GitHub Issues](https://github.com/patrick204nqh/sumologic-query/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/patrick204nqh/sumologic-query/discussions)
+- **Documentation**: [docs/](docs/)
+
 ## Resources
 
 - **Sumo Logic API Docs**: https://help.sumologic.com/docs/api/search-job/
 - **Query Language**: https://help.sumologic.com/docs/search/
 - **Bug Reports**: https://github.com/patrick204nqh/sumologic-query/issues
-- **Feature Requests**: https://github.com/patrick204nqh/sumologic-query/issues
-
-## Support
-
-- **Issues**: [GitHub Issues](https://github.com/patrick204nqh/sumologic-query/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/patrick204nqh/sumologic-query/discussions)
 
 ---
 

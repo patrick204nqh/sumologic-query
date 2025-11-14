@@ -75,7 +75,7 @@ Enhancement suggestions are tracked as GitHub issues. When creating an enhanceme
 
 - Ruby 2.7 or higher
 - Bundler
-- Sumo Logic account with API access (for integration testing)
+- Sumo Logic account with API access (for manual testing)
 
 ### Setup Steps
 
@@ -100,13 +100,24 @@ bundle exec rake
 ### Running the CLI Locally
 
 ```bash
-# Without installing
-bundle exec bin/sumo-query --query "error" \
+# Set up credentials
+export SUMO_ACCESS_ID="your_access_id"
+export SUMO_ACCESS_KEY="your_access_key"
+export SUMO_DEPLOYMENT="us2"
+
+# Search command
+bundle exec bin/sumo-query search --query "error" \
   --from "2025-11-13T14:00:00" \
   --to "2025-11-13T15:00:00"
 
+# Collectors command
+bundle exec bin/sumo-query collectors
+
+# Sources command
+bundle exec bin/sumo-query sources
+
 # With debug output
-SUMO_DEBUG=1 bundle exec bin/sumo-query --query "error" \
+SUMO_DEBUG=1 bundle exec bin/sumo-query search --query "error" \
   --from "2025-11-13T14:00:00" \
   --to "2025-11-13T15:00:00"
 ```
@@ -120,8 +131,40 @@ bundle exec rspec
 # Specific test file
 bundle exec rspec spec/sumologic/client_spec.rb
 
-# With coverage
+# Specific module
+bundle exec rspec spec/sumologic/configuration_spec.rb
+bundle exec rspec spec/sumologic/http/
+
+# With coverage and documentation format
 bundle exec rspec --format documentation
+
+# Run linter
+bundle exec rubocop
+
+# Run all checks (tests + linter)
+bundle exec rake
+```
+
+### Testing Individual Components
+
+```ruby
+# Test configuration
+bundle exec irb
+require './lib/sumologic'
+config = Sumologic::Configuration.new(
+  access_id: ENV['SUMO_ACCESS_ID'],
+  access_key: ENV['SUMO_ACCESS_KEY'],
+  deployment: 'us2'
+)
+puts config.api_url
+
+# Test client
+client = Sumologic::Client.new(
+  access_id: ENV['SUMO_ACCESS_ID'],
+  access_key: ENV['SUMO_ACCESS_KEY']
+)
+collectors = client.list_collectors
+puts collectors.first
 ```
 
 ## Code Style
@@ -148,27 +191,48 @@ Key style points:
 ```
 sumologic-query/
 ├── lib/
-│   ├── sumologic.rb           # Main entry point
+│   ├── sumologic.rb                    # Main entry point & error classes
 │   └── sumologic/
-│       ├── version.rb          # Version constant
-│       └── client.rb           # Core API client
+│       ├── version.rb                  # Version constant
+│       ├── configuration.rb            # Configuration management
+│       ├── client.rb                   # Main client facade
+│       ├── cli.rb                      # Thor-based CLI
+│       ├── http/
+│       │   ├── authenticator.rb        # API authentication
+│       │   └── client.rb               # HTTP request handling
+│       ├── search/
+│       │   ├── job.rb                  # Search job creation
+│       │   ├── poller.rb               # Job status polling
+│       │   └── paginator.rb            # Result pagination
+│       └── metadata/
+│           ├── collector.rb            # Collector operations
+│           └── source.rb               # Source operations
 ├── bin/
-│   └── sumologic               # CLI executable
+│   └── sumo-query                      # CLI executable
 ├── spec/
-│   ├── spec_helper.rb          # Test configuration
-│   ├── sumologic_spec.rb       # Module tests
+│   ├── spec_helper.rb                  # Test configuration
 │   └── sumologic/
-│       └── client_spec.rb      # Client tests
+│       ├── client_spec.rb              # Client tests
+│       ├── configuration_spec.rb       # Configuration tests
+│       └── http/
+│           └── authenticator_spec.rb   # HTTP auth tests
+├── docs/
+│   ├── examples.md                     # Query examples
+│   ├── architecture.md                 # Architecture docs
+│   ├── api-reference.md                # API reference
+│   └── troubleshooting.md              # Troubleshooting guide
 └── ...
 ```
 
 ## Design Principles
 
-1. **Simplicity First**: Keep the tool focused on querying logs
-2. **Zero Dependencies**: Use stdlib only (no external gems)
+1. **Simplicity First**: Keep the tool focused on querying logs and metadata
+2. **Minimal Dependencies**: Use stdlib + Thor for CLI (gracefully degraded)
 3. **Read-Only**: No write operations to Sumo Logic
-4. **Clear Errors**: User-friendly error messages
+4. **Clear Errors**: User-friendly error messages with context
 5. **Fast Execution**: Efficient API usage and pagination
+6. **Separation of Concerns**: Modular architecture (HTTP, Search, Metadata, CLI)
+7. **Testability**: Loosely coupled components with dependency injection
 
 ## Adding New Features
 
@@ -191,10 +255,14 @@ Before adding a new feature:
 
 When adding new features:
 
-1. Update README.md with examples
+1. Update appropriate documentation:
+   - Main README.md for high-level changes
+   - docs/examples.md for new query patterns
+   - docs/api-reference.md for API changes
+   - docs/architecture.md for architectural changes
 2. Add code comments for complex logic
 3. Update CHANGELOG.md
-4. Consider adding examples to `examples/` directory
+4. Add tests with documentation
 
 ## Release Process
 

@@ -63,7 +63,8 @@ module Sumologic
       def log_poll_status(state, data, interval, count)
         msg_count = data['messageCount']
         rec_count = data['recordCount']
-        log_info "Job state: #{state} (#{msg_count} messages, #{rec_count} records) [interval: #{interval}s, poll: #{count}]"
+        log_info "Job state: #{state} (#{msg_count} messages, #{rec_count} records) " \
+                 "[interval: #{interval}s, poll: #{count}]"
       end
 
       def log_completion(start_time, poll_count)

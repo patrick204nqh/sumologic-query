@@ -37,27 +37,9 @@ module Sumologic
 
       client = create_client
 
-      warn "Querying Sumo Logic: #{options[:from]} to #{options[:to]}"
-      warn "Query: #{options[:query]}"
-      warn 'This may take 1-3 minutes depending on data volume...'
-      $stderr.puts
-
-      results = client.search(
-        query: options[:query],
-        from_time: options[:from],
-        to_time: options[:to],
-        time_zone: options[:time_zone],
-        limit: options[:limit]
-      )
-
-      output_json(
-        query: options[:query],
-        from: options[:from],
-        to: options[:to],
-        time_zone: options[:time_zone],
-        message_count: results.size,
-        messages: results
-      )
+      log_search_info
+      results = execute_search(client)
+      output_search_results(results)
 
       warn "\nMessage count: #{results.size}"
     end
@@ -187,6 +169,34 @@ module Sumologic
 
     def error(message)
       warn message
+    end
+
+    def log_search_info
+      warn "Querying Sumo Logic: #{options[:from]} to #{options[:to]}"
+      warn "Query: #{options[:query]}"
+      warn 'This may take 1-3 minutes depending on data volume...'
+      $stderr.puts
+    end
+
+    def execute_search(client)
+      client.search(
+        query: options[:query],
+        from_time: options[:from],
+        to_time: options[:to],
+        time_zone: options[:time_zone],
+        limit: options[:limit]
+      )
+    end
+
+    def output_search_results(results)
+      output_json(
+        query: options[:query],
+        from: options[:from],
+        to: options[:to],
+        time_zone: options[:time_zone],
+        message_count: results.size,
+        messages: results
+      )
     end
   end
 end

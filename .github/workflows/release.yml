@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'lib/sumologic/version.rb'
   workflow_dispatch:
 
 jobs:
@@ -105,42 +107,29 @@ jobs:
           ruby-version: '3.3'
           bundler-cache: true
 
+      - name: Conventional Changelog
+        id: changelog
+        uses: TriPSs/conventional-changelog-action@v6
+        with:
+          github-token: ${{ secrets.github_token }}
+          preset: 'angular'
+          output-file: 'CHANGELOG.md'
+          skip-version-file: 'true'
+          skip-commit: 'false'
+          git-message: 'chore(release): v${{ needs.check-version.outputs.current_version }}'
+          tag-prefix: 'v'
+          skip-on-empty: 'false'
+          version: ${{ needs.check-version.outputs.current_version }}
+
       - name: Build gem
+        if: steps.changelog.outputs.skipped == 'false'
         run: |
           bundle install
           gem build sumologic-query.gemspec
           ls -lh *.gem
 
-      - name: Create git tag
-        id: tag
-        run: |
-          version="${{ needs.check-version.outputs.current_version }}"
-
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-          git tag -a "v${version}" -m "Release v${version}
-
-          Auto-released by GitHub Actions
-          All tests passed ✅"
-
-          git push origin "v${version}"
-          echo "tag_name=v${version}" >> $GITHUB_OUTPUT
-
-      - name: Generate release notes
-        id: notes
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const { data } = await github.rest.repos.generateReleaseNotes({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              tag_name: '${{ steps.tag.outputs.tag_name }}',
-            });
-            return data.body;
-          result-encoding: string
-
       - name: Publish to RubyGems
+        if: steps.changelog.outputs.skipped == 'false'
         env:
           GEM_HOST_API_KEY: ${{ secrets.RUBYGEMS_API_KEY }}
         run: |
@@ -154,9 +143,10 @@ jobs:
           echo "✅ Published to RubyGems"
 
       - name: Create GitHub Release
+        if: steps.changelog.outputs.skipped == 'false'
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ steps.tag.outputs.tag_name }}
+          tag_name: ${{ steps.changelog.outputs.tag }}
           files: '*.gem'
           body: |
             ## Installation
@@ -172,11 +162,11 @@ jobs:
 
             ## What's Changed
 
-            ${{ steps.notes.outputs.result }}
+            ${{ steps.changelog.outputs.clean_changelog }}
 
             ## Links
 
-            - 📦 [RubyGems Package](https://rubygems.org/gems/sumologic-query/versions/${{ needs.check-version.outputs.current_version }})
+            - 📦 [RubyGems Package](https://rubygems.org/gems/sumologic-query/versions/${{ steps.changelog.outputs.version }})
             - 📖 [Documentation](https://github.com/patrick204nqh/sumologic-query#readme)
             - 🐛 [Report Issues](https://github.com/patrick204nqh/sumologic-query/issues)
         env:

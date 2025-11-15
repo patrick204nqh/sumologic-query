@@ -41,17 +41,24 @@ Open an issue with:
 3. Add tests for new functionality
 4. Update documentation
 5. Ensure `bundle exec rake` passes
-6. Write a clear commit message
+6. Write a clear commit message using [Conventional Commits](.github/commit-convention.md)
 7. Submit the pull request
 
 **Commit message format:**
-```
-Short summary (50 chars or less)
 
-Detailed explanation if needed (wrap at 72 chars).
-Use present tense: "Add feature" not "Added feature"
+We use [Conventional Commits](.github/commit-convention.md) for automated changelog generation.
 
-Fixes #123
+```bash
+# Feature
+feat(cli): add JSON export format
+
+# Bug fix
+fix: resolve timeout issue in long-running queries
+
+# Breaking change
+feat: redesign CLI argument structure
+
+BREAKING CHANGE: --output flag renamed to --format
 ```
 
 ## Development Setup
@@ -217,13 +224,18 @@ Keep docs simple and focused on key concepts.
 
 ## Release Process
 
-Maintainers handle releases:
+Releases are automated. Maintainers:
 
-1. Update `lib/sumologic/version.rb`
-2. Update `CHANGELOG.md`
-3. Create tag: `git tag v1.0.0`
-4. Push: `git push --tags`
-5. GitHub Actions publishes gem
+1. Make changes using [conventional commits](.github/commit-convention.md)
+2. Update `lib/sumologic/version.rb` when ready to release
+3. Push to `main`
+4. GitHub Actions automatically:
+   - Generates changelog from commits
+   - Creates git tag
+   - Publishes gem to RubyGems
+   - Creates GitHub Release
+
+See [.github/commit-convention.md](.github/commit-convention.md) for commit format and examples.
 
 ## Getting Help
 

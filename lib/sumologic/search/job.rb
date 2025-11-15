@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require_relative 'stream'
-
 module Sumologic
   module Search
     # Manages search job lifecycle: create, poll, fetch, delete
@@ -11,7 +9,6 @@ module Sumologic
         @config = config
         @poller = Poller.new(http_client: http_client, config: config)
         @paginator = Paginator.new(http_client: http_client, config: config)
-        @stream = Stream.new(paginator: @paginator)
       end
 
       # Execute a complete search workflow
@@ -25,22 +22,6 @@ module Sumologic
       rescue StandardError => e
         delete(job_id) if job_id
         raise Error, "Search failed: #{e.message}"
-      end
-
-      # Create job and wait for completion
-      # Returns job_id for use with streaming
-      def create_and_wait(query:, from_time:, to_time:, time_zone: 'UTC')
-        job_id = create(query, from_time, to_time, time_zone)
-        @poller.poll(job_id)
-        job_id
-      end
-
-      # Stream messages from a completed job
-      # Returns an Enumerator
-      def stream_messages(job_id, limit: nil)
-        @stream.each(job_id, limit: limit)
-      ensure
-        delete(job_id)
       end
 
       private

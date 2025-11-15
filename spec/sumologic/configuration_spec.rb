@@ -27,8 +27,8 @@ RSpec.describe Sumologic::Configuration do
     it 'sets default configuration values' do
       config = described_class.new
 
-      expect(config.initial_poll_interval).to eq(5)
-      expect(config.max_poll_interval).to eq(20)
+      expect(config.initial_poll_interval).to eq(2)
+      expect(config.max_poll_interval).to eq(15)
       expect(config.poll_backoff_factor).to eq(1.5)
       expect(config.timeout).to eq(300)
       expect(config.max_messages_per_request).to eq(10_000)

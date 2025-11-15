@@ -28,6 +28,8 @@ module Sumologic
 
     # Search logs with query
     # Returns array of messages
+    #
+    # @param limit [Integer, nil] Maximum number of messages to return (stops fetching after limit)
     def search(query:, from_time:, to_time:, time_zone: 'UTC', limit: nil)
       @search.execute(
         query: query,
@@ -36,25 +38,6 @@ module Sumologic
         time_zone: time_zone,
         limit: limit
       )
-    end
-
-    # Search logs with streaming interface
-    # Returns an Enumerator that yields messages one at a time
-    # More memory efficient for large result sets
-    #
-    # Example:
-    #   client.search_stream(query: 'error', from_time: ..., to_time: ...).each do |message|
-    #     puts message['map']['message']
-    #   end
-    def search_stream(query:, from_time:, to_time:, time_zone: 'UTC', limit: nil)
-      job_id = @search.create_and_wait(
-        query: query,
-        from_time: from_time,
-        to_time: to_time,
-        time_zone: time_zone
-      )
-
-      @search.stream_messages(job_id, limit: limit)
     end
 
     # List all collectors

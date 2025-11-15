@@ -17,3 +17,4 @@ Each ADR follows this structure:
 ## Records
 
 - [001: Performance Optimizations](001-performance-optimizations.md) - Connection pooling and parallelization strategies
+- [002: Radical Simplification](002-radical-simplification.md) - Removing over-engineering and streaming APIs (supersedes parts of 001)

@@ -20,13 +20,17 @@ require_relative 'sumologic/configuration'
 require_relative 'sumologic/http/authenticator'
 require_relative 'sumologic/http/client'
 
+# Load utilities
+require_relative 'sumologic/utils/worker'
+
 # Load search domain
 require_relative 'sumologic/search/poller'
-require_relative 'sumologic/search/paginator'
+require_relative 'sumologic/search/message_fetcher'
 require_relative 'sumologic/search/job'
 
 # Load metadata domain
 require_relative 'sumologic/metadata/collector'
+require_relative 'sumologic/metadata/collector_source_fetcher'
 require_relative 'sumologic/metadata/source'
 
 # Load main client (facade)

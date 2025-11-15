@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative 'parallel_fetcher'
+require_relative 'collector_source_fetcher'
 
 module Sumologic
   module Metadata
@@ -9,7 +9,7 @@ module Sumologic
       def initialize(http_client:, collector_client:)
         @http = http_client
         @collector_client = collector_client
-        @parallel_fetcher = ParallelFetcher.new(max_threads: 10)
+        @fetcher = CollectorSourceFetcher.new
       end
 
       # List sources for a specific collector
@@ -36,7 +36,7 @@ module Sumologic
 
         log_info "Fetching sources for #{active_collectors.size} active collectors in parallel..."
 
-        result = @parallel_fetcher.fetch_all(active_collectors) do |collector|
+        result = @fetcher.fetch_all(active_collectors) do |collector|
           fetch_collector_sources(collector)
         end
 

@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative 'message_fetcher'
+
 module Sumologic
   module Search
     # Manages search job lifecycle: create, poll, fetch, delete
@@ -8,7 +10,7 @@ module Sumologic
         @http = http_client
         @config = config
         @poller = Poller.new(http_client: http_client, config: config)
-        @paginator = Paginator.new(http_client: http_client, config: config)
+        @message_fetcher = MessageFetcher.new(http_client: http_client, config: config)
       end
 
       # Execute a complete search workflow
@@ -16,7 +18,7 @@ module Sumologic
       def execute(query:, from_time:, to_time:, time_zone: 'UTC', limit: nil)
         job_id = create(query, from_time, to_time, time_zone)
         @poller.poll(job_id)
-        messages = @paginator.fetch_all(job_id, limit: limit)
+        messages = @message_fetcher.fetch_all(job_id, limit: limit)
         delete(job_id)
         messages
       rescue StandardError => e

@@ -43,8 +43,20 @@ module Sumologic
         pages = calculate_remaining_pages(job_id, offset, limit)
         return messages if pages.empty?
 
-        # Fetch remaining pages in parallel using Worker
-        additional_messages = @worker.execute(pages) do |page|
+        total_pages = pages.size + 1 # +1 for first page already fetched
+
+        # Fetch remaining pages in parallel using Worker with progress callbacks
+        additional_messages = @worker.execute(pages, callbacks: {
+                                                start: lambda { |workers, _total|
+                                                  warn "  Created #{workers} workers for #{total_pages} pages"
+                                                },
+                                                progress: lambda { |done, _total|
+                                                  warn "  Progress: #{done + 1}/#{total_pages} pages fetched"
+                                                },
+                                                finish: lambda { |_results, duration|
+                                                  warn "  All workers completed in #{duration.round(2)}s"
+                                                }
+                                              }) do |page|
           fetch_page(page[:job_id], page[:offset], page[:limit])
         end
 
@@ -95,9 +107,15 @@ module Sumologic
       end
 
       def log_progress(batch_size, offset)
-        return unless ENV['SUMO_DEBUG'] || $DEBUG
+        total = offset + batch_size
+        warn "  Fetched #{batch_size} messages (total: #{total})"
 
-        warn "[Sumologic::Search::MessageFetcher] Fetched #{batch_size} messages at offset #{offset}"
+        # Detailed info in debug mode
+        log_debug "  [Offset: #{offset}, batch: #{batch_size}]" if ENV['SUMO_DEBUG'] || $DEBUG
+      end
+
+      def log_debug(message)
+        warn "[Sumologic::Search::MessageFetcher] #{message}"
       end
     end
   end

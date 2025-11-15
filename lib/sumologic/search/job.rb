@@ -59,7 +59,12 @@ module Sumologic
       end
 
       def log_info(message)
-        warn "[Sumologic::Search::Job] #{message}" if ENV['SUMO_DEBUG'] || $DEBUG
+        # Always show job creation (with ID) for user reference
+        if message.start_with?('Created search job:')
+          warn "  #{message}"
+        elsif ENV['SUMO_DEBUG'] || $DEBUG
+          warn "[Sumologic::Search::Job] #{message}"
+        end
       end
 
       def log_error(message)

@@ -57,6 +57,7 @@ RSpec.describe Sumologic::Utils::Worker do
       expect do
         worker.execute(items) do |n|
           raise 'Test error' if n == 2
+
           n
         end
       end.to raise_error(StandardError, /Test error/)

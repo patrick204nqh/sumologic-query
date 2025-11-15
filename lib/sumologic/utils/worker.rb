@@ -20,18 +20,39 @@ module Sumologic
       # Returns array of results from the block execution
       #
       # @param items [Array] Work items to process
+      # @param callbacks [Hash] Optional callbacks for progress tracking:
+      #   - :start => ->(worker_count, total_items) { }
+      #   - :progress => ->(completed_count, total_items) { }
+      #   - :finish => ->(results, duration) { }
       # @yield [item] Block to execute for each item
       # @return [Array] Results from block executions (nil results are filtered out)
-      def execute(items, &block)
+      def execute(items, callbacks: {}, &block)
         return [] if items.empty?
 
-        result = []
-        mutex = Mutex.new
+        start_time = Time.now
+        context = {
+          result: [],
+          completed: { count: 0 },
+          mutex: Mutex.new,
+          total_items: items.size,
+          callbacks: callbacks
+        }
+
         queue = create_work_queue(items)
-        threads = create_workers(queue, result, mutex, &block)
+        worker_count = [MAX_THREADS, queue.size].min
+
+        # Callback: start
+        callbacks[:start]&.call(worker_count, items.size)
+
+        threads = create_workers(queue, context, &block)
 
         threads.each(&:join)
-        result
+
+        # Callback: finish
+        duration = Time.now - start_time
+        callbacks[:finish]&.call(context[:result], duration)
+
+        context[:result]
       end
 
       private
@@ -42,20 +63,28 @@ module Sumologic
         queue
       end
 
-      def create_workers(queue, result, mutex, &block)
+      def create_workers(queue, context, &block)
         worker_count = [MAX_THREADS, queue.size].min
 
         Array.new(worker_count) do
-          Thread.new { process_queue(queue, result, mutex, &block) }
+          Thread.new { process_queue(queue, context, &block) }
         end
       end
 
-      def process_queue(queue, result, mutex, &block)
+      def process_queue(queue, context, &block)
         until queue.empty?
           item = pop_safely(queue)
           break unless item
 
-          process_item(item, result, mutex, &block)
+          process_item(item, context[:result], context[:mutex], &block)
+
+          # Callback: progress (thread-safe)
+          next unless context[:callbacks][:progress]
+
+          context[:mutex].synchronize do
+            context[:completed][:count] += 1
+            context[:callbacks][:progress].call(context[:completed][:count], context[:total_items])
+          end
         end
       end
 

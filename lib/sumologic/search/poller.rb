@@ -63,18 +63,24 @@ module Sumologic
       end
 
       def log_poll_status(state, data, interval, count)
-        msg_count = data['messageCount']
-        rec_count = data['recordCount']
-        log_info "Job state: #{state} (#{msg_count} messages, #{rec_count} records) " \
-                 "[interval: #{interval}s, poll: #{count}]"
+        msg_count = data['messageCount'] || 0
+        rec_count = data['recordCount'] || 0
+
+        # Always show progress to user (not just in debug mode)
+        warn "  Status: #{state} | Messages: #{msg_count} | Records: #{rec_count}"
+
+        # Detailed info in debug mode
+        log_debug "  [Poll #{count + 1}, interval: #{interval}s]"
       end
 
-      def log_completion(start_time, poll_count)
+      def log_completion(start_time, _poll_count)
         elapsed = Time.now - start_time
-        log_info "Job completed in #{elapsed.round(1)} seconds after #{poll_count + 1} polls"
+        warn "Search job completed in #{elapsed.round(1)}s"
+        warn 'Fetching messages...'
+        $stderr.puts
       end
 
-      def log_info(message)
+      def log_debug(message)
         warn "[Sumologic::Search::Poller] #{message}" if ENV['SUMO_DEBUG'] || $DEBUG
       end
     end

@@ -19,3 +19,4 @@ Each ADR follows this structure:
 - [001: Performance Optimizations](001-performance-optimizations.md) - Connection pooling and ParallelFetcher pattern
 - [002: Radical Simplification](002-radical-simplification.md) - Removing over-engineering and streaming APIs
 - [003: Extract Parallel Worker Pattern](003-extract-parallel-worker-pattern.md) - DRY abstraction with consistent naming (Worker, CollectorSourceFetcher, MessageFetcher)
+- [004: Enhanced Progress Tracking](004-enhanced-progress-tracking.md) - Callbacks pattern for real-time visibility and improved UX

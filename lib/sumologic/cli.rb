@@ -39,9 +39,13 @@ module Sumologic
 
       log_search_info
       results = execute_search(client)
-      output_search_results(results)
 
-      warn "\nMessage count: #{results.size}"
+      warn '=' * 60
+      warn "Results: #{results.size} messages"
+      warn '=' * 60
+      $stderr.puts
+
+      output_search_results(results)
     end
 
     desc 'list-collectors', 'List all Sumo Logic collectors'
@@ -178,9 +182,14 @@ module Sumologic
     end
 
     def log_search_info
-      warn "Querying Sumo Logic: #{options[:from]} to #{options[:to]}"
+      warn '=' * 60
+      warn 'Sumo Logic Search Query'
+      warn '=' * 60
+      warn "Time Range: #{options[:from]} to #{options[:to]}"
       warn "Query: #{options[:query]}"
-      warn 'This may take 1-3 minutes depending on data volume...'
+      warn "Limit: #{options[:limit] || 'unlimited'}"
+      warn '-' * 60
+      warn 'Creating search job...'
       $stderr.puts
     end
 

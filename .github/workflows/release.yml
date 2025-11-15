@@ -105,7 +105,17 @@ jobs:
           ruby-version: '3.3'
           bundler-cache: true
 
-      - name: Conventional Changelog
+      - name: Create git tag
+        run: |
+          version="${{ needs.check-version.outputs.current_version }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "v${version}" -m "Release v${version}"
+          git push origin "v${version}"
+          echo "tag=v${version}" >> $GITHUB_OUTPUT
+        id: tag
+
+      - name: Generate changelog
         id: changelog
         uses: TriPSs/conventional-changelog-action@v6
         with:
@@ -113,21 +123,26 @@ jobs:
           preset: 'angular'
           output-file: 'CHANGELOG.md'
           skip-version-file: 'true'
-          skip-commit: 'false'
-          git-message: 'chore(release): v${{ needs.check-version.outputs.current_version }}'
+          skip-commit: 'true'
+          skip-tag: 'true'
           tag-prefix: 'v'
-          skip-on-empty: 'false'
           version: ${{ needs.check-version.outputs.current_version }}
 
+      - name: Commit changelog
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add CHANGELOG.md
+          git commit -m "chore(release): update CHANGELOG for v${{ needs.check-version.outputs.current_version }}" || echo "No changes to commit"
+          git push origin main || echo "Nothing to push"
+
       - name: Build gem
-        if: steps.changelog.outputs.skipped == 'false'
         run: |
           bundle install
           gem build sumologic-query.gemspec
           ls -lh *.gem
 
       - name: Publish to RubyGems
-        if: steps.changelog.outputs.skipped == 'false'
         env:
           GEM_HOST_API_KEY: ${{ secrets.RUBYGEMS_API_KEY }}
         run: |
@@ -141,10 +156,9 @@ jobs:
           echo "✅ Published to RubyGems"
 
       - name: Create GitHub Release
-        if: steps.changelog.outputs.skipped == 'false'
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ steps.changelog.outputs.tag }}
+          tag_name: ${{ steps.tag.outputs.tag }}
           files: '*.gem'
           body: |
             ## Installation
@@ -164,7 +178,7 @@ jobs:
 
             ## Links
 
-            - 📦 [RubyGems Package](https://rubygems.org/gems/sumologic-query/versions/${{ steps.changelog.outputs.version }})
+            - 📦 [RubyGems Package](https://rubygems.org/gems/sumologic-query/versions/${{ needs.check-version.outputs.current_version }})
             - 📖 [Documentation](https://github.com/patrick204nqh/sumologic-query#readme)
             - 🐛 [Report Issues](https://github.com/patrick204nqh/sumologic-query/issues)
         env:

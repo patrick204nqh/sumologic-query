@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - main
-    paths:
-      - 'lib/sumologic/version.rb'
   workflow_dispatch:
 
 jobs:

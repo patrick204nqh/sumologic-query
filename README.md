@@ -86,7 +86,8 @@ sumo-query search --query "YOUR_QUERY" \
   --to "END_TIME" \
   [--output FILE] \
   [--limit N] \
-  [--time-zone TZ]
+  [--time-zone TZ] \
+  [--interactive]
 ```
 
 **Required options:**
@@ -95,10 +96,49 @@ sumo-query search --query "YOUR_QUERY" \
 - `-t, --to TIME` - End time (ISO 8601 format)
 
 **Optional options:**
+- `-i, --interactive` - Launch interactive browser with FZF
 - `-z, --time-zone TZ` - Time zone (default: UTC)
 - `-l, --limit N` - Limit number of messages
 - `-o, --output FILE` - Save to file (default: stdout)
 - `-d, --debug` - Enable debug output
+
+### Interactive Mode 🚀
+
+Explore your logs interactively with a powerful FZF-based interface:
+
+```bash
+# Launch interactive mode
+sumo-query search --query 'error' \
+  --from '2025-11-13T14:00:00' \
+  --to '2025-11-13T15:00:00' \
+  --interactive
+
+# Or use the shorthand
+sumo-query search -q 'error' -f '2025-11-13T14:00:00' -t '2025-11-13T15:00:00' -i
+```
+
+**Features:**
+- 🔍 Fuzzy search across all message fields
+- 👁️ Live preview with full JSON details
+- 🎨 Color-coded log levels (ERROR, WARN, INFO)
+- ⌨️ Keyboard shortcuts for quick actions
+- 📋 Multi-select and batch operations
+- 💾 Export selected messages
+
+**Keybindings:**
+- `Enter` - Toggle selection (mark/unmark message)
+- `Tab` - Open current message in pager (copyable view)
+- `Ctrl-S` - Save selected messages to `sumo-selected.txt` and exit
+- `Ctrl-Y` - Copy selected messages to clipboard and exit
+- `Ctrl-E` - Export selected messages to `sumo-export.jsonl` and exit
+- `Ctrl-A` - Select all messages
+- `Ctrl-D` - Deselect all messages
+- `Ctrl-/` - Toggle preview pane
+- `Ctrl-Q` - Quit without saving
+
+**Requirements:**
+- Install FZF: `brew install fzf` (macOS) or `apt-get install fzf` (Linux)
+- See: https://github.com/junegunn/fzf#installation
 
 ### List Collectors
 

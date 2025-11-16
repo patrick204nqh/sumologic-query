@@ -52,7 +52,7 @@ module Sumologic
 
         time = format_time(map['_messagetime'])
         level = format_level(map['level'] || map['severity'] || 'INFO')
-        source = truncate(map['_sourceCategory'] || '-', 25)
+        source = truncate(map['_source'] || map['_sourcecategory'] || '-', 25)
         message = truncate(sanitize(map['_raw'] || map['message'] || ''), 80)
 
         # No index in display - use FZF line number instead
@@ -153,15 +153,16 @@ module Sumologic
       def build_header_text
         query = @results['query'] || 'N/A'
         count = @messages.size
-        sources = @messages.map { |m| m['map']['_sourceCategory'] }.compact.uniq.size
+        sources = @messages.map { |m| m['map']['_source'] }.compact.uniq.size
 
         # Column headers
         columns = "#{pad('TIME', 8)} #{pad('LEVEL', 7)} #{pad('SOURCE', 25)} MESSAGE"
-        # Info and keys on second line
+        # Info line
         info = "#{count} msgs | #{sources} sources | Query: #{truncate(query, 40)}"
+        # Keys on separate line
         keys = 'Enter=select Tab=view Ctrl-S=save Ctrl-Y=copy Ctrl-E=export Ctrl-Q=quit'
 
-        "#{columns}\n#{info} | #{keys}"
+        "#{columns}\n#{info}\n#{keys}"
       end
 
       def pad(text, width)

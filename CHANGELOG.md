@@ -6,6 +6,14 @@
 
 
 
+## [1.3.2](https://github.com/patrick204nqh/sumologic-query/compare/v1.3.1...v1.3.2) (2025-11-16)
+
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
+
+
+**Full Changelog**: https://github.com/patrick204nqh/sumologic-query/compare/v1.3.1...v1.3.2
+
 # [1.2.0](https://github.com/patrick204nqh/sumologic-query/compare/v1.1.2...v1.2.0) (2025-11-14)
 
 

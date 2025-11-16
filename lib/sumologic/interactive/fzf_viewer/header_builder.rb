@@ -4,7 +4,7 @@ module Sumologic
   module Interactive
     class FzfViewer
       module HeaderBuilder
-        extend self
+        module_function
 
         def build_header_text(results, messages)
           [
@@ -30,7 +30,7 @@ module Sumologic
         end
 
         def build_search_tips
-          "💡 Simple text search (case-insensitive) - searches all JSON fields and log content"
+          '💡 Simple text search (case-insensitive) - searches all JSON fields and log content'
         end
 
         def build_keybindings_help

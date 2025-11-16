@@ -4,10 +4,11 @@ module Sumologic
   module Interactive
     class FzfViewer
       module Formatter
-        extend self
+        module_function
 
         def format_time(timestamp_ms)
           return 'N/A' unless timestamp_ms
+
           Time.at(timestamp_ms.to_i / 1000).strftime('%H:%M:%S')
         end
 

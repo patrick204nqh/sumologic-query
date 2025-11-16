@@ -3,6 +3,7 @@
 > A lightweight Ruby CLI for querying Sumo Logic logs and metadata. Simple, fast, read-only access to your logs.
 
 [![Gem Version](https://badge.fury.io/rb/sumologic-query.svg)](https://badge.fury.io/rb/sumologic-query)
+[![Downloads](https://img.shields.io/gem/dt/sumologic-query.svg)](https://rubygems.org/gems/sumologic-query)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## Why This Tool?

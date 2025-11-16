@@ -6,7 +6,7 @@ module Sumologic
   module Interactive
     class FzfViewer
       module FzfConfig
-        extend self
+        module_function
 
         def build_fzf_args(input_path, preview_path, header_text)
           [
@@ -43,7 +43,8 @@ module Sumologic
             '--bind=ctrl-a:select-all',
             '--bind=ctrl-d:deselect-all',
             '--bind=ctrl-s:execute-silent(echo {+} > sumo-selected.txt)+abort',
-            '--bind=ctrl-y:execute-silent(echo {+} | pbcopy || echo {+} | xclip -selection clipboard 2>/dev/null)+abort',
+            '--bind=ctrl-y:execute-silent(echo {+} | pbcopy || ' \
+            'echo {+} | xclip -selection clipboard 2>/dev/null)+abort',
             '--bind=ctrl-e:execute-silent(echo {+} > sumo-export.jsonl)+abort',
             '--bind=ctrl-/:toggle-preview',
             "--bind=ctrl-r:reload(cat #{input_path})",

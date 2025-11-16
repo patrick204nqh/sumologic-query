@@ -105,34 +105,78 @@ jobs:
           ruby-version: '3.3'
           bundler-cache: true
 
-      - name: Generate release notes
+      - name: Generate release notes from commits
         id: notes
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const { data } = await github.rest.repos.generateReleaseNotes({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              tag_name: 'v${{ needs.check-version.outputs.current_version }}',
-            });
-            return data.body;
-          result-encoding: string
+        run: |
+          # Get previous version
+          prev_version=$(git describe --tags --abbrev=0 2>/dev/null | sed 's/v//' || echo "0.0.0")
+
+          # Get commits since last tag (excluding version bumps and changelog updates)
+          commits=$(git log v${prev_version}..HEAD --pretty=format:"%s" --no-merges | \
+            grep -v "skip ci" | \
+            grep -v "^bump version" | \
+            grep -v "^chore(release):" || true)
+
+          # Generate markdown changelog
+          changelog=""
+
+          # Categorize commits
+          features=$(echo "$commits" | grep "^feat:" | sed 's/^feat: /- /' || true)
+          fixes=$(echo "$commits" | grep "^fix:" | sed 's/^fix: /- /' || true)
+          chores=$(echo "$commits" | grep "^chore:" | sed 's/^chore: /- /' || true)
+          docs=$(echo "$commits" | grep "^docs:" | sed 's/^docs: /- /' || true)
+          refactor=$(echo "$commits" | grep "^refactor:" | sed 's/^refactor: /- /' || true)
+
+          # Build changelog sections
+          if [ -n "$features" ]; then
+            changelog="${changelog}### 🎉 New Features\n\n${features}\n\n"
+          fi
+
+          if [ -n "$fixes" ]; then
+            changelog="${changelog}### 🐛 Bug Fixes\n\n${fixes}\n\n"
+          fi
+
+          if [ -n "$refactor" ]; then
+            changelog="${changelog}### 🔧 Refactoring\n\n${refactor}\n\n"
+          fi
+
+          if [ -n "$docs" ]; then
+            changelog="${changelog}### 📚 Documentation\n\n${docs}\n\n"
+          fi
+
+          if [ -n "$chores" ]; then
+            changelog="${changelog}### 🧹 Maintenance\n\n${chores}\n\n"
+          fi
+
+          # If no categorized commits, list all
+          if [ -z "$changelog" ]; then
+            other=$(echo "$commits" | sed 's/^/- /' || true)
+            if [ -n "$other" ]; then
+              changelog="### Changes\n\n${other}\n\n"
+            fi
+          fi
+
+          # Output to file and GitHub output
+          echo -e "$changelog" > /tmp/release_notes.md
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          cat /tmp/release_notes.md >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Update CHANGELOG.md
         run: |
           version="${{ needs.check-version.outputs.current_version }}"
           date=$(date +%Y-%m-%d)
 
-          # Create new entry
-          cat > /tmp/new_entry.md << 'EOF'
-          ## [$version](https://github.com/patrick204nqh/sumologic-query/compare/v$prev_version...v$version) ($date)
-
-          ${{ steps.notes.outputs.result }}
-
-          EOF
-
           # Get previous version for compare link
           prev_version=$(git describe --tags --abbrev=0 2>/dev/null | sed 's/v//' || echo "0.0.0")
+
+          # Create new entry
+          cat > /tmp/new_entry.md << 'EOF'
+## [$version](https://github.com/patrick204nqh/sumologic-query/compare/v$prev_version...v$version) ($date)
+
+${{ steps.notes.outputs.changelog }}
+
+EOF
 
           # Replace placeholders
           sed -i.bak "s/\$version/$version/g" /tmp/new_entry.md
@@ -219,7 +263,7 @@ jobs:
 
             ## What's Changed
 
-            ${{ steps.notes.outputs.result }}
+            ${{ steps.notes.outputs.changelog }}
 
             ## Links
 

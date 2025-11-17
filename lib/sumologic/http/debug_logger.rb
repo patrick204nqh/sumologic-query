@@ -22,7 +22,7 @@ module Sumologic
       def log_response(response)
         return unless $DEBUG
 
-        warn "[DEBUG] API Response:"
+        warn '[DEBUG] API Response:'
         warn "  Status: #{response.code} #{response.message}"
         log_response_body(response.body)
         warn ''

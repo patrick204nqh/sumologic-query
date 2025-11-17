@@ -29,7 +29,7 @@ module Sumologic
         uri = @request_builder.build_uri(path, query_params)
         request = @request_builder.build_request(method, uri, body)
 
-        DebugLogger.log_request(method, uri, body)
+        DebugLogger.log_request(method, uri, body, request.to_hash)
 
         response = execute_request(uri, request)
 

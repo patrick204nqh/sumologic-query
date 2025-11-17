@@ -9,12 +9,13 @@ module Sumologic
     module DebugLogger
       module_function
 
-      def log_request(method, uri, body)
+      def log_request(method, uri, body, headers = {})
         return unless $DEBUG
 
         warn "\n[DEBUG] API Request:"
         warn "  Method: #{method.to_s.upcase}"
         warn "  URL: #{uri}"
+        warn "  Cookie: #{headers['Cookie']}" if headers['Cookie']
         log_request_body(body) if body
         warn ''
       end

@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'openssl'
+
 module Sumologic
   module Http
     # Thread-safe connection pool for HTTP clients
@@ -84,8 +86,20 @@ module Sumologic
         http.read_timeout = READ_TIMEOUT
         http.open_timeout = OPEN_TIMEOUT
         http.keep_alive_timeout = 30
+
+        # SSL configuration
+        http.verify_mode = OpenSSL::SSL::VERIFY_PEER
+        http.cert_store = ssl_cert_store
+
         http.start
         http
+      end
+
+      def ssl_cert_store
+        # Use system's default certificate store
+        store = OpenSSL::X509::Store.new
+        store.set_default_paths
+        store
       end
 
       def create_temporary_connection(uri)

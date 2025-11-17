@@ -13,6 +13,37 @@ module Sumologic
       true
     end
 
+    # Hook to setup debug mode and client before each command
+    # Skips for commands that don't need authentication
+    def initialize(*args)
+      super
+      setup_debug_mode
+    end
+
+    no_commands do
+      def setup_debug_mode
+        $DEBUG = true if options[:debug]
+      end
+
+      def client
+        @client ||= create_client
+      end
+
+      def create_client
+        Client.new
+      rescue AuthenticationError => e
+        error "Authentication Error: #{e.message}"
+        error "\nPlease set environment variables:"
+        error "  export SUMO_ACCESS_ID='your_access_id'"
+        error "  export SUMO_ACCESS_KEY='your_access_key'"
+        error "  export SUMO_DEPLOYMENT='us2'  # Optional, defaults to us2"
+        exit 1
+      rescue Error => e
+        error "Error: #{e.message}"
+        exit 1
+      end
+    end
+
     desc 'search', 'Search Sumo Logic logs'
     long_desc <<~DESC
       Search Sumo Logic logs using a query string.
@@ -39,10 +70,6 @@ module Sumologic
     option :limit, type: :numeric, aliases: '-l', desc: 'Maximum messages to return'
     option :interactive, type: :boolean, aliases: '-i', desc: 'Launch interactive browser (requires fzf)'
     def search
-      $DEBUG = true if options[:debug]
-
-      client = create_client
-
       log_search_info
       results = execute_search(client)
 
@@ -66,10 +93,6 @@ module Sumologic
         sumo-query list-collectors --output collectors.json
     DESC
     def list_collectors
-      $DEBUG = true if options[:debug]
-
-      client = create_client
-
       warn 'Fetching collectors...'
       collectors = client.list_collectors
 
@@ -92,10 +115,6 @@ module Sumologic
     DESC
     option :collector_id, type: :string, desc: 'Collector ID to list sources for'
     def list_sources
-      $DEBUG = true if options[:debug]
-
-      client = create_client
-
       if options[:collector_id]
         list_sources_for_collector(client, options[:collector_id])
       else
@@ -112,20 +131,6 @@ module Sumologic
     default_task :search
 
     private
-
-    def create_client
-      Client.new
-    rescue AuthenticationError => e
-      error "Authentication Error: #{e.message}"
-      error "\nPlease set environment variables:"
-      error "  export SUMO_ACCESS_ID='your_access_id'"
-      error "  export SUMO_ACCESS_KEY='your_access_key'"
-      error "  export SUMO_DEPLOYMENT='us2'  # Optional, defaults to us2"
-      exit 1
-    rescue Error => e
-      error "Error: #{e.message}"
-      exit 1
-    end
 
     def list_sources_for_collector(client, collector_id)
       warn "Fetching sources for collector: #{collector_id}"

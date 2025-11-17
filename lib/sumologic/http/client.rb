@@ -4,6 +4,7 @@ require 'net/http'
 require 'json'
 require 'uri'
 require_relative 'connection_pool'
+require_relative 'debug_logger'
 
 module Sumologic
   module Http
@@ -23,7 +24,12 @@ module Sumologic
         uri = build_uri(path, query_params)
         request = build_request(method, uri, body)
 
+        DebugLogger.log_request(method, uri, body)
+
         response = execute_request(uri, request)
+
+        DebugLogger.log_response(response)
+
         handle_response(response)
       rescue Errno::ECONNRESET, Errno::EPIPE, EOFError, Net::HTTPBadResponse => e
         # Connection error - raise for retry at higher level

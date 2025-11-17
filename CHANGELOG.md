@@ -6,6 +6,21 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and release notes are automatically generated from commit messages.
+## [1.3.3](https://github.com/patrick204nqh/sumologic-query/compare/v1.3.2...v1.3.3) (2025-11-17)
+
+### 🎉 New Features
+
+- implement modular HTTP client components for improved organization and functionality
+- refactor CLI structure to modular commands and remove deprecated modules
+- update CHANGELOG entry creation to include changelog content directly
+- bump version to 1.3.3
+- add ADR for SSL certificate verification to address connection issues with Sumo Logic API
+- refactor CLI structure into modular components for improved organization and maintainability
+- implement debug logging for HTTP requests and responses
+- enhance release notes generation and update CHANGELOG format for better clarity
+
+
+
 
 ## [1.3.2](https://github.com/patrick204nqh/sumologic-query/compare/v1.3.1...v1.3.2) (2025-11-16)
 

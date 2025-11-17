@@ -166,22 +166,16 @@ jobs:
         run: |
           version="${{ needs.check-version.outputs.current_version }}"
           date=$(date +%Y-%m-%d)
+          changelog="${{ steps.notes.outputs.changelog }}"
 
           # Get previous version for compare link
           prev_version=$(git describe --tags --abbrev=0 2>/dev/null | sed 's/v//' || echo "0.0.0")
 
-          # Create new entry
-          cat > /tmp/new_entry.md << 'EOF'
-## [$version](https://github.com/patrick204nqh/sumologic-query/compare/v$prev_version...v$version) ($date)
-
-${{ steps.notes.outputs.changelog }}
-
-EOF
-
-          # Replace placeholders
-          sed -i.bak "s/\$version/$version/g" /tmp/new_entry.md
-          sed -i.bak "s/\$prev_version/$prev_version/g" /tmp/new_entry.md
-          sed -i.bak "s/\$date/$date/g" /tmp/new_entry.md
+          # Create new entry with changelog content
+          echo "## [$version](https://github.com/patrick204nqh/sumologic-query/compare/v$prev_version...v$version) ($date)" > /tmp/new_entry.md
+          echo "" >> /tmp/new_entry.md
+          echo "$changelog" >> /tmp/new_entry.md
+          echo "" >> /tmp/new_entry.md
 
           # Prepend to CHANGELOG.md (after the header)
           if [ -f CHANGELOG.md ]; then

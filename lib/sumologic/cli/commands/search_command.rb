@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative 'base_command'
+require_relative '../../utils/time_parser'
 
 module Sumologic
   class CLI < Thor
@@ -8,6 +9,7 @@ module Sumologic
       # Handles the search command execution
       class SearchCommand < BaseCommand
         def execute
+          parse_time_options
           log_search_info
           results = perform_search
 
@@ -22,11 +24,26 @@ module Sumologic
 
         private
 
+        def parse_time_options
+          # Parse time formats and store both original and parsed values
+          @original_from = options[:from]
+          @original_to = options[:to]
+          @parsed_from = Utils::TimeParser.parse(options[:from])
+          @parsed_to = Utils::TimeParser.parse(options[:to])
+          @parsed_timezone = Utils::TimeParser.parse_timezone(options[:time_zone])
+        rescue Utils::TimeParser::ParseError => e
+          warn "Error parsing time: #{e.message}"
+          exit 1
+        end
+
         def log_search_info
           warn '=' * 60
           warn 'Sumo Logic Search Query'
           warn '=' * 60
-          warn "Time Range: #{options[:from]} to #{options[:to]}"
+          warn "Time Range: #{@original_from} to #{@original_to}"
+          if @original_from != @parsed_from || @original_to != @parsed_to
+            warn "  (Parsed: #{@parsed_from} to #{@parsed_to})"
+          end
           warn "Query: #{options[:query]}"
           warn "Limit: #{options[:limit] || 'unlimited'}"
           warn '-' * 60
@@ -37,9 +54,9 @@ module Sumologic
         def perform_search
           client.search(
             query: options[:query],
-            from_time: options[:from],
-            to_time: options[:to],
-            time_zone: options[:time_zone],
+            from_time: @parsed_from,
+            to_time: @parsed_to,
+            time_zone: @parsed_timezone,
             limit: options[:limit]
           )
         end
@@ -54,9 +71,11 @@ module Sumologic
         def output_search_results(results)
           output_json(
             query: options[:query],
-            from: options[:from],
-            to: options[:to],
-            time_zone: options[:time_zone],
+            from: @parsed_from,
+            to: @parsed_to,
+            from_original: @original_from,
+            to_original: @original_to,
+            time_zone: @parsed_timezone,
             message_count: results.size,
             messages: results
           )
@@ -75,9 +94,9 @@ module Sumologic
         def build_formatted_results(results)
           {
             'query' => options[:query],
-            'from' => options[:from],
-            'to' => options[:to],
-            'time_zone' => options[:time_zone],
+            'from' => @parsed_from,
+            'to' => @parsed_to,
+            'time_zone' => @parsed_timezone,
             'message_count' => results.size,
             'messages' => results
           }

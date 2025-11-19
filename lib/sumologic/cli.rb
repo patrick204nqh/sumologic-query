@@ -26,25 +26,38 @@ module Sumologic
     long_desc <<~DESC
       Search Sumo Logic logs using a query string.
 
+      Time Formats:
+        --from and --to support multiple formats:
+        • 'now' - current time
+        • Relative: '-30s', '-5m', '-2h', '-7d', '-1w', '-1M' (sec/min/hour/day/week/month)
+        • Unix timestamp: '1700000000' (seconds since epoch)
+        • ISO 8601: '2025-11-13T14:00:00'
+
       Examples:
-        # Error timeline with 5-minute buckets
+        # Last 30 minutes
+        sumo-query search --query 'error' --from '-30m' --to 'now'
+
+        # Last hour with ISO format
         sumo-query search --query 'error | timeslice 5m | count' \\
           --from '2025-11-13T14:00:00' --to '2025-11-13T15:00:00'
 
-        # Search for specific text
+        # Last 7 days
         sumo-query search --query '"connection timeout"' \\
-          --from '2025-11-13T14:00:00' --to '2025-11-13T15:00:00' \\
-          --limit 100
+          --from '-7d' --to 'now' --limit 100
+
+        # Using Unix timestamps
+        sumo-query search --query 'error' \\
+          --from '1700000000' --to '1700003600'
 
         # Interactive mode with FZF
         sumo-query search --query 'error' \\
-          --from '2025-11-13T14:00:00' --to '2025-11-13T15:00:00' \\
-          --interactive
+          --from '-1h' --to 'now' --interactive
     DESC
     option :query, type: :string, required: true, aliases: '-q', desc: 'Search query'
-    option :from, type: :string, required: true, aliases: '-f', desc: 'Start time (ISO 8601)'
-    option :to, type: :string, required: true, aliases: '-t', desc: 'End time (ISO 8601)'
-    option :time_zone, type: :string, default: 'UTC', aliases: '-z', desc: 'Time zone'
+    option :from, type: :string, required: true, aliases: '-f', desc: 'Start time (now, -30m, unix timestamp, ISO 8601)'
+    option :to, type: :string, required: true, aliases: '-t', desc: 'End time (now, -30m, unix timestamp, ISO 8601)'
+    option :time_zone, type: :string, default: 'UTC', aliases: '-z',
+                       desc: 'Time zone (UTC, EST, AEST, +00:00, America/New_York, Australia/Sydney)'
     option :limit, type: :numeric, aliases: '-l', desc: 'Maximum messages to return'
     option :interactive, type: :boolean, aliases: '-i', desc: 'Launch interactive browser (requires fzf)'
     def search

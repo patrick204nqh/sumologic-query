@@ -6,6 +6,23 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and release notes are automatically generated from commit messages.
+## [1.3.5](https://github.com/patrick204nqh/sumologic-query/compare/v1.3.4...v1.3.5) (2025-11-19)
+
+### 🎉 New Features
+
+- add discover-sources command for dynamic source discovery from logs
+- implement rate limiting configuration and enhance documentation for querying options
+
+### 🔧 Refactoring
+
+- improve source discovery logic and enhance debugging output
+
+### 📚 Documentation
+
+- update tldr.md with enhanced search options and new commands for querying logs
+
+
+
 ## [1.3.4](https://github.com/patrick204nqh/sumologic-query/compare/v1.3.3...v1.3.4) (2025-11-19)
 
 ### 🎉 New Features

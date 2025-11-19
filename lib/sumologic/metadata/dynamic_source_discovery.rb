@@ -71,48 +71,69 @@ module Sumologic
       def parse_aggregation_results(records)
         return [] if records.empty?
 
-        # Debug: Check first record to see what fields are available
-        if debug_enabled? && records.first
-          first_map = records.first['map'] || {}
-          log_info "Sample aggregation record fields: #{first_map.keys.join(', ')}"
-          log_info "Sample _count value: #{first_map['_count']}"
-        end
+        log_sample_record(records.first) if debug_enabled?
 
-        # Use a hash to deduplicate by name+category, keeping highest count
+        sources_hash, skipped_count = collect_sources_from_records(records)
+        source_models = build_source_models(sources_hash)
+
+        log_discovery_summary(skipped_count, source_models.size, records.size)
+        source_models
+      end
+
+      # Log sample record for debugging
+      def log_sample_record(record)
+        return unless record
+
+        first_map = record['map'] || {}
+        log_info "Sample aggregation record fields: #{first_map.keys.join(', ')}"
+        log_info "Sample _count value: #{first_map['_count']}"
+      end
+
+      # Collect unique sources from records, deduplicating by name+category
+      def collect_sources_from_records(records)
         sources_hash = {}
         skipped_zero_count = 0
 
         records.each do |record|
-          map = record['map'] || {}
+          source_data = extract_source_data(record)
+          next unless source_data
 
-          # Skip if no _sourceName (shouldn't happen with count by _sourceName)
-          source_name = map['_sourcename']
-          next unless source_name
-
-          source_category = map['_sourcecategory']
-          # Sumo Logic aggregation returns _count field
-          message_count = (map['_count'] || 0).to_i
-
-          # Skip sources with 0 count (shouldn't happen in valid aggregation results)
-          if message_count.zero?
+          if source_data[:count].zero?
             skipped_zero_count += 1
             next
           end
 
-          # Create unique key for deduplication
-          key = "#{source_name}||#{source_category}"
-
-          # Keep the entry with highest count (or first if counts are equal)
-          next unless !sources_hash[key] || sources_hash[key][:count] < message_count
-
-          sources_hash[key] = {
-            name: source_name,
-            category: source_category,
-            count: message_count
-          }
+          update_sources_hash(sources_hash, source_data)
         end
 
-        # Convert hash to model objects
+        [sources_hash, skipped_zero_count]
+      end
+
+      # Extract source data from a single record
+      def extract_source_data(record)
+        map = record['map'] || {}
+        source_name = map['_sourcename']
+        return nil unless source_name
+
+        {
+          name: source_name,
+          category: map['_sourcecategory'],
+          count: (map['_count'] || 0).to_i
+        }
+      end
+
+      # Update sources hash with new source data (keeping highest count)
+      def update_sources_hash(sources_hash, source_data)
+        key = "#{source_data[:name]}||#{source_data[:category]}"
+        existing = sources_hash[key]
+
+        return if existing && existing[:count] >= source_data[:count]
+
+        sources_hash[key] = source_data
+      end
+
+      # Build and sort model objects from source hash
+      def build_source_models(sources_hash)
         source_models = sources_hash.values.map do |source_data|
           DynamicSourceModel.new(
             name: source_data[:name],
@@ -121,12 +142,13 @@ module Sumologic
           )
         end
 
-        # Sort by message count descending
-        source_models.sort!
+        source_models.sort
+      end
 
-        log_info "Skipped #{skipped_zero_count} sources with zero message count" if skipped_zero_count > 0
-        log_info "Discovered #{source_models.size} unique source names (from #{records.size} records)"
-        source_models
+      # Log summary of discovery results
+      def log_discovery_summary(skipped_count, discovered_count, total_records)
+        log_info "Skipped #{skipped_count} sources with zero message count" if skipped_count.positive?
+        log_info "Discovered #{discovered_count} unique source names (from #{total_records} records)"
       end
     end
   end

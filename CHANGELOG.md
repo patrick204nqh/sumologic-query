@@ -6,6 +6,23 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and release notes are automatically generated from commit messages.
+## [1.3.4](https://github.com/patrick204nqh/sumologic-query/compare/v1.3.3...v1.3.4) (2025-11-19)
+
+### 🎉 New Features
+
+- add time parsing utility and enhance CLI time options for flexible querying
+- enhance debug logging to include request headers for better traceability
+
+### 🐛 Bug Fixes
+
+- freeze regex for relative time parsing and improve error message formatting
+
+### 📚 Documentation
+
+- update README and examples to enhance time format usage and add new time format examples
+
+
+
 ## [1.3.3](https://github.com/patrick204nqh/sumologic-query/compare/v1.3.2...v1.3.3) (2025-11-17)
 
 ### 🎉 New Features

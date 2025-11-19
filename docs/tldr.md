@@ -1,28 +1,28 @@
 # sumo-query
 
 > Query Sumo Logic logs and metadata from the command line.
-> Provides read-only access to search logs, list collectors, and list sources.
+> Provides read-only access to search logs, list collectors, discover sources, and list sources.
 > More information: <https://github.com/patrick204nqh/sumologic-query>.
 
-- Search for logs containing a specific term:
+- Search logs using relative time (supports `-30s`, `-5m`, `-2h`, `-7d`, `-1w`, `-1M`, or `now`):
 
-`sumo-query search --query {{error}} --from {{2025-11-13T14:00:00}} --to {{2025-11-13T15:00:00}}`
+`sumo-query search --query {{error}} --from {{-1h}} --to {{now}}`
 
 - Search logs with source category filter:
 
-`sumo-query search --query {{_sourceCategory=prod/api error}} --from {{2025-11-13T14:00:00}} --to {{2025-11-13T15:00:00}}`
+`sumo-query search --query {{_sourceCategory=prod/api error}} --from {{-30m}} --to {{now}}`
 
-- Search logs and save results to a file:
+- Search logs with timezone and limit results:
 
-`sumo-query search --query {{error}} --from {{2025-11-13T14:00:00}} --to {{2025-11-13T15:00:00}} --output {{path/to/results.json}}`
+`sumo-query search --query {{error}} --from {{-1h}} --to {{now}} --time-zone {{America/New_York}} --limit {{100}}`
 
-- Count messages by field:
+- Search logs in interactive mode with FZF browser (requires fzf):
 
-`sumo-query search --query {{* | count by status_code}} --from {{2025-11-13T14:00:00}} --to {{2025-11-13T15:00:00}}`
+`sumo-query search --query {{error}} --from {{-1h}} --to {{now}} --interactive`
 
-- Search with timezone and limit results:
+- Discover dynamic source names from logs (CloudWatch/ECS/Lambda):
 
-`sumo-query search --query {{error}} --from {{2025-11-13T09:00:00}} --to {{2025-11-13T17:00:00}} --time-zone {{America/New_York}} --limit {{100}}`
+`sumo-query discover-sources --from {{-24h}} --to {{now}} --filter {{_sourceCategory=*ecs*}}`
 
 - List all collectors:
 
@@ -32,6 +32,10 @@
 
 `sumo-query list-sources`
 
-- List sources and save to file:
+- Display version information:
 
-`sumo-query list-sources --output {{path/to/sources.json}}`
+`sumo-query version`
+
+---
+
+> This page follows the [tldr-pages style guide](https://github.com/tldr-pages/tldr/blob/main/contributing-guides/style-guide.md).

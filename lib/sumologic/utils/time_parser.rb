@@ -21,7 +21,7 @@ module Sumologic
         'M' => 2_592_000 # months (30 days approximation)
       }.freeze
 
-      RELATIVE_TIME_REGEX = /^([+-])(\d+)([smhdwM])$/
+      RELATIVE_TIME_REGEX = /^([+-])(\d+)([smhdwM])$/.freeze
 
       class ParseError < StandardError; end
 
@@ -49,7 +49,8 @@ module Sumologic
           format_time(parsed)
         rescue ArgumentError
           raise ParseError,
-                "Invalid time format: '#{time_str}'. Supported formats: 'now', relative (e.g., '-30m'), Unix timestamp, or ISO 8601"
+                "Invalid time format: '#{time_str}'. " \
+                "Supported formats: 'now', relative (e.g., '-30m'), Unix timestamp, or ISO 8601"
         end
       end
 

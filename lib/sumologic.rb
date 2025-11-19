@@ -26,12 +26,16 @@ require_relative 'sumologic/utils/worker'
 # Load search domain
 require_relative 'sumologic/search/poller'
 require_relative 'sumologic/search/message_fetcher'
+require_relative 'sumologic/search/record_fetcher'
 require_relative 'sumologic/search/job'
 
 # Load metadata domain
+require_relative 'sumologic/metadata/loggable'
+require_relative 'sumologic/metadata/models'
 require_relative 'sumologic/metadata/collector'
 require_relative 'sumologic/metadata/collector_source_fetcher'
 require_relative 'sumologic/metadata/source'
+require_relative 'sumologic/metadata/dynamic_source_discovery'
 
 # Load main client (facade)
 require_relative 'sumologic/client'

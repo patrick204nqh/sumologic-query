@@ -21,3 +21,5 @@ Each ADR follows this structure:
 - [003: Extract Parallel Worker Pattern](003-extract-parallel-worker-pattern.md) - DRY abstraction with consistent naming (Worker, CollectorSourceFetcher, MessageFetcher)
 - [004: Enhanced Progress Tracking](004-enhanced-progress-tracking.md) - Callbacks pattern for real-time visibility and improved UX
 - [005: Interactive Mode with FZF](005-interactive-mode-with-fzf.md) - FZF-based interactive browser for exploring large log datasets
+- [006: SSL Certificate Verification](006-ssl-certificate-verification.md) - Balancing security and usability in API client
+- [007: Dynamic Source Discovery](007-dynamic-source-discovery.md) - Add `discover-sources` command for finding CloudWatch/ECS/Lambda sources from log data

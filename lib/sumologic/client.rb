@@ -24,6 +24,11 @@ module Sumologic
       @search = Search::Job.new(http_client: @http, config: @config)
       @collector = Metadata::Collector.new(http_client: @http)
       @source = Metadata::Source.new(http_client: @http, collector_client: @collector, config: @config)
+      @dynamic_source_discovery = Metadata::DynamicSourceDiscovery.new(
+        http_client: @http,
+        search_job: @search,
+        config: @config
+      )
     end
 
     # Search logs with query
@@ -56,6 +61,23 @@ module Sumologic
     # Returns array of hashes with collector and sources
     def list_all_sources
       @source.list_all
+    end
+
+    # Discover dynamic source names from actual log data
+    # Useful for CloudWatch/ECS sources with dynamic _sourceName values
+    # Returns hash with ALL unique source names found, with message counts
+    #
+    # @param from_time [String] Start time (ISO 8601, unix timestamp, or relative)
+    # @param to_time [String] End time
+    # @param time_zone [String] Time zone (default: UTC)
+    # @param filter [String, nil] Optional filter query to scope results
+    def discover_dynamic_sources(from_time:, to_time:, time_zone: 'UTC', filter: nil)
+      @dynamic_source_discovery.discover(
+        from_time: from_time,
+        to_time: to_time,
+        time_zone: time_zone,
+        filter: filter
+      )
     end
   end
 end

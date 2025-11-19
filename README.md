@@ -6,360 +6,166 @@
 [![Downloads](https://img.shields.io/gem/dt/sumologic-query.svg)](https://rubygems.org/gems/sumologic-query)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## Why This Tool?
+## Features
 
-- **Intuitive time parsing**: Use relative times like `-1h`, `-30m`, or `now` - no more calculating timestamps!
-- **Flexible timezone support**: US, Australian, and IANA timezone formats supported
-- **Minimal dependencies**: Uses only Ruby stdlib + Thor for CLI
-- **Fast queries**: Efficient polling and automatic pagination
-- **Interactive mode**: Explore logs with FZF-powered fuzzy search and preview
-- **Simple interface**: Just query, get results, done
-- **Read-only**: No write operations, perfect for safe log access
-- **Modular architecture**: Clean separation of concerns (HTTP, Search, Metadata)
-- **Metadata support**: List collectors and sources alongside log queries
-
-All existing Ruby Sumo Logic gems are unmaintained (2-9 years dormant). This tool provides a fresh, minimal approach focused on querying logs and metadata.
+- **Simple time parsing** - Use `-1h`, `-30m`, `now` instead of timestamps
+- **Dynamic source discovery** - Find CloudWatch/ECS/Lambda sources from logs
+- **Interactive mode** - Explore logs with FZF fuzzy search
+- **Timezone support** - US, Australian, and IANA formats
+- **Fast & efficient** - Smart polling and pagination
+- **Read-only** - Safe log access with no write operations
 
 ## Installation
 
-### Via RubyGems
-
 ```bash
+# Via RubyGems
 gem install sumologic-query
-```
 
-### Via Homebrew
-
-```bash
+# Via Homebrew
 brew tap patrick204nqh/tap
 brew install sumologic-query
 ```
 
-### From Source
-
-```bash
-git clone https://github.com/patrick204nqh/sumologic-query.git
-cd sumologic-query
-bundle install
-bundle exec rake install
-```
-
 ## Quick Start
 
-### 1. Set Up Credentials
-
-Export your Sumo Logic API credentials:
+### 1. Set Credentials
 
 ```bash
 export SUMO_ACCESS_ID="your_access_id"
 export SUMO_ACCESS_KEY="your_access_key"
-export SUMO_DEPLOYMENT="us2"  # Optional: us1, us2 (default), eu, au, etc.
+export SUMO_DEPLOYMENT="us2"  # Optional: us1, us2 (default), eu, au
 ```
 
-**Getting credentials:**
-1. Log in to Sumo Logic
-2. Go to **Administration → Security → Access Keys**
-3. Create a new access key or use existing
-4. Copy the Access ID and Access Key
+Get credentials: Sumo Logic → **Administration → Security → Access Keys**
 
-### 2. Run Your First Query
+### 2. Run Queries
 
 ```bash
-# Search logs from last hour (easy!)
-sumo-query search --query 'error' --from '-1h' --to 'now' --limit 10
+# Search logs
+sumo-query search -q 'error' -f '-1h' -t 'now' --limit 100
 
-# Search logs from last 30 minutes
-sumo-query search --query 'error' --from '-30m' --to 'now'
+# Discover dynamic sources (CloudWatch/ECS/Lambda)
+sumo-query discover-sources
 
-# Or use ISO 8601 format
-sumo-query search --query 'error' \
-  --from '2025-11-13T14:00:00' \
-  --to '2025-11-13T15:00:00' \
-  --limit 10
-
-# List collectors
+# List collectors and sources
 sumo-query collectors
-
-# List sources
 sumo-query sources
 ```
 
-## Usage
+## Commands
 
-The CLI provides three main commands:
-
-### Search Logs
+### 1. Search Logs
 
 ```bash
-sumo-query search --query "YOUR_QUERY" \
-  --from "START_TIME" \
-  --to "END_TIME" \
-  [--output FILE] \
-  [--limit N] \
-  [--time-zone TZ] \
-  [--interactive]
+sumo-query search -q "YOUR_QUERY" -f "START" -t "END" [OPTIONS]
 ```
 
-**Required options:**
-- `-q, --query QUERY` - Sumo Logic query string
-- `-f, --from TIME` - Start time (ISO 8601 format)
-- `-t, --to TIME` - End time (ISO 8601 format)
+**Options:**
+- `-q, --query` - Query string (required)
+- `-f, --from` - Start time (required, e.g., `-1h`, `2025-11-19T14:00:00`)
+- `-t, --to` - End time (required, e.g., `now`)
+- `-z, --time-zone` - Timezone (default: UTC)
+- `-l, --limit` - Max messages to return
+- `-o, --output` - Save to file
+- `-i, --interactive` - Launch FZF browser
+- `-d, --debug` - Debug output
 
-**Optional options:**
-- `-i, --interactive` - Launch interactive browser with FZF
-- `-z, --time-zone TZ` - Time zone (default: UTC)
-- `-l, --limit N` - Limit number of messages
-- `-o, --output FILE` - Save to file (default: stdout)
-- `-d, --debug` - Enable debug output
+**Interactive Mode** (`-i`): FZF-based browser with fuzzy search, preview, and multi-select. Requires `fzf` ([install](https://github.com/junegunn/fzf#installation)).
 
-### Interactive Mode 🚀
-
-Explore your logs interactively with a powerful FZF-based interface:
+### 2. Discover Dynamic Sources
 
 ```bash
-# Launch interactive mode - last hour
-sumo-query search --query 'error' --from '-1h' --to 'now' --interactive
-
-# Last 30 minutes with shorthand
-sumo-query search -q 'error' -f '-30m' -t 'now' -i
-
-# Or use ISO 8601 format
-sumo-query search -q 'error' -f '2025-11-13T14:00:00' -t '2025-11-13T15:00:00' -i
+sumo-query discover-sources [OPTIONS]
 ```
 
-**Features:**
-- 🔍 Fuzzy search across all message fields
-- 👁️ Live preview with full JSON details
-- 🎨 Color-coded log levels (ERROR, WARN, INFO)
-- ⌨️ Keyboard shortcuts for quick actions
-- 📋 Multi-select and batch operations
-- 💾 Export selected messages
+Finds dynamic source names from log data (CloudWatch, ECS, Lambda streams).
 
-**Keybindings:**
-- `Enter` - Toggle selection (mark/unmark message)
-- `Tab` - Open current message in pager (copyable view)
-- `Ctrl-S` - Save selected messages to `sumo-selected.txt` and exit
-- `Ctrl-Y` - Copy selected messages to clipboard and exit
-- `Ctrl-E` - Export selected messages to `sumo-export.jsonl` and exit
-- `Ctrl-A` - Select all messages
-- `Ctrl-D` - Deselect all messages
-- `Ctrl-/` - Toggle preview pane
-- `Ctrl-Q` - Quit without saving
+**Options:**
+- `-f, --from` - Start time (default: `-24h`)
+- `-t, --to` - End time (default: `now`)
+- `--filter` - Filter query (e.g., `_sourceCategory=*ecs*`)
+- `-z, --time-zone` - Timezone (default: UTC)
+- `-o, --output` - Save to file
 
-**Requirements:**
-- Install FZF: `brew install fzf` (macOS) or `apt-get install fzf` (Linux)
-- See: https://github.com/junegunn/fzf#installation
-
-### Time Format Examples
-
-Combine relative times with timezones for powerful queries:
+**Examples:**
 
 ```bash
-# Last hour in Sydney time
-sumo-query search -q 'error' -f '-1h' -t 'now' -z AEST
+# Discover all sources from last 24 hours
+sumo-query discover-sources
 
-# Last 30 minutes in US Eastern time
-sumo-query search -q 'error' -f '-30m' -t 'now' -z EST
+# Filter to ECS only
+sumo-query discover-sources --filter '_sourceCategory=*ecs*'
 
-# Last 7 days with output to file (directories auto-created)
-sumo-query search -q 'error' -f '-7d' -t 'now' -o logs/weekly/errors.json
-
-# Mix relative and ISO 8601 formats
-sumo-query search -q 'error' -f '-24h' -t '2025-11-19T12:00:00'
-
-# Unix timestamps from last hour to now
-sumo-query search -q 'error' -f '1700000000' -t 'now'
+# Last 7 days, save to file
+sumo-query discover-sources -f '-7d' -o sources.json
 ```
 
-### List Collectors
+### 3. List Collectors & Sources
 
 ```bash
-sumo-query collectors [--output FILE]
+# List collectors
+sumo-query collectors [-o FILE]
+
+# List static sources
+sumo-query sources [-o FILE]
 ```
 
-Lists all collectors in your account with status and metadata.
-
-### List Sources
+## Time Formats
 
 ```bash
-sumo-query sources [--output FILE]
+# Relative (recommended)
+-1h, -30m, -7d, now
+
+# ISO 8601
+2025-11-19T14:00:00
+
+# Unix timestamp
+1700000000
+
+# Timezones
+UTC, AEST, EST, America/New_York, Australia/Sydney, +10:00
 ```
 
-Lists all sources from active collectors.
+See [examples/queries.md](examples/queries.md) for comprehensive query patterns.
 
-
-## Ruby Library Usage
+## Ruby Library
 
 ```ruby
 require 'sumologic'
 
-# Initialize client
 client = Sumologic::Client.new(
   access_id: ENV['SUMO_ACCESS_ID'],
-  access_key: ENV['SUMO_ACCESS_KEY'],
-  deployment: 'us2'
+  access_key: ENV['SUMO_ACCESS_KEY']
 )
 
-# Search logs
-results = client.search(
-  query: 'error',
-  from_time: '2025-11-13T14:00:00',
-  to_time: '2025-11-13T15:00:00',
-  time_zone: 'UTC',
-  limit: 1000
-)
+# Search
+client.search(query: 'error', from_time: '-1h', to_time: 'now')
 
-# List collectors and sources
-collectors = client.list_collectors
-sources = client.list_all_sources
+# Discover sources
+client.discover_dynamic_sources(from_time: '-24h', to_time: 'now')
+
+# Metadata
+client.list_collectors
+client.list_all_sources
 ```
-
-**Time parsing utilities:**
-
-```ruby
-require 'sumologic/utils/time_parser'
-
-# Parse relative times and timezones
-from_time = Sumologic::Utils::TimeParser.parse('-1h')
-timezone = Sumologic::Utils::TimeParser.parse_timezone('AEST')
-```
-
-
-## Time Formats
-
-Multiple time formats are supported:
-
-```bash
-# Relative time (easiest!)
-sumo-query search -q 'error' -f '-1h' -t 'now'
-
-# ISO 8601
-sumo-query search -q 'error' -f '2025-11-13T14:00:00' -t '2025-11-13T15:00:00'
-
-# With timezones
-sumo-query search -q 'error' -f '-1h' -t 'now' -z 'AEST'
-```
-
-**Supported:** Relative times (`-1h`, `-30m`, `-7d`), ISO 8601, Unix timestamps, IANA timezones, US/Australian abbreviations
-
-See [Query Examples](examples/queries.md) for more time format options.
-
-## Output Format
-
-Results are returned as JSON:
-
-```json
-{
-  "query": "error",
-  "from": "2025-11-13T14:00:00",
-  "to": "2025-11-13T15:00:00",
-  "time_zone": "UTC",
-  "message_count": 42,
-  "messages": [
-    {
-      "map": {
-        "_messagetime": "1731506400123",
-        "_sourceCategory": "prod/api",
-        "_sourceName": "api-server-01",
-        "message": "Error processing request: timeout"
-      }
-    }
-  ]
-}
-```
-
-## Performance
-
-Query execution time depends on data volume:
-
-| Messages | Typical Time |
-|----------|--------------|
-| < 10K | 30-60 seconds |
-| 10K-100K | 1-2 minutes |
-| 100K+ | 2-5 minutes |
-
-**Tips for faster queries:**
-- Narrow your time range
-- Add `_sourceCategory` filters
-- Use `--limit` to cap results
-- Use aggregation queries instead of raw messages
-
-### Rate Limiting
-
-The tool respects Sumo Logic's API rate limits (4 req/sec per user, 10 concurrent requests). Defaults use 5 workers with 250ms delays. Adjust if needed:
-
-```bash
-# Faster (higher risk)
-export SUMO_MAX_WORKERS=8
-export SUMO_REQUEST_DELAY=0.15
-
-# Safer (slower)
-export SUMO_MAX_WORKERS=2
-export SUMO_REQUEST_DELAY=0.5
-```
-
-See [Rate Limiting Guide](docs/rate-limiting.md) for details.
 
 ## Documentation
 
-- **[Quick Reference (tldr)](docs/tldr.md)** - Concise command examples
-- **[Query Examples](examples/queries.md)** - Query patterns, time formats, and timezones
-- **[Rate Limiting](docs/rate-limiting.md)** - Configure API rate limits and workers
-- **[Architecture](docs/architecture/)** - Design and architecture decisions
-
-## Development
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, testing, and contribution guidelines.
-
-Quick start:
-
-```bash
-# Clone and install
-git clone https://github.com/patrick204nqh/sumologic-query.git
-cd sumologic-query
-bundle install
-
-# Run tests (73+ specs including time parser tests)
-bundle exec rspec
-
-# Run linter
-bundle exec rubocop
-
-# Test locally with new time formats
-bundle exec bin/sumo-query search --query "error" \
-  --from "-1h" --to "now"
-
-# Test with timezone support
-bundle exec bin/sumo-query search --query "error" \
-  --from "-30m" --to "now" --time-zone "AEST"
-```
+- [Query Examples](examples/queries.md) - Query patterns and examples
+- [Quick Reference](docs/tldr.md) - Command cheat sheet
+- [Rate Limiting](docs/rate-limiting.md) - Performance tuning
+- [Architecture](docs/architecture/) - Design decisions
 
 ## Contributing
 
-Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details.
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT License - see [LICENSE](LICENSE) file.
 
-## Support
+## Links
 
-- **Issues**: [GitHub Issues](https://github.com/patrick204nqh/sumologic-query/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/patrick204nqh/sumologic-query/discussions)
-- **Documentation**: [docs/](docs/)
-
-## Resources
-
-- **Sumo Logic API Docs**: https://help.sumologic.com/docs/api/search-job/
-- **Query Language**: https://help.sumologic.com/docs/search/
-- **Bug Reports**: https://github.com/patrick204nqh/sumologic-query/issues
-
----
-
-**Note**: This tool provides read-only access to Sumo Logic logs. It does not modify any data or configuration.
+- [Issues](https://github.com/patrick204nqh/sumologic-query/issues)
+- [Sumo Logic API Docs](https://help.sumologic.com/docs/api/search-job/)
+- [Query Language](https://help.sumologic.com/docs/search/)

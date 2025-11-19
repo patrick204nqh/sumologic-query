@@ -1,11 +1,15 @@
 # frozen_string_literal: true
 
 require_relative 'collector_source_fetcher'
+require_relative 'loggable'
+require_relative 'models'
 
 module Sumologic
   module Metadata
     # Handles source metadata operations
     class Source
+      include Loggable
+
       def initialize(http_client:, collector_client:, config: nil)
         @http = http_client
         @collector_client = collector_client
@@ -50,6 +54,7 @@ module Sumologic
       private
 
       # Fetch sources for a single collector
+      # Returns CollectorWithSources model
       def fetch_collector_sources(collector)
         collector_id = collector['id']
         collector_name = collector['name']
@@ -57,25 +62,14 @@ module Sumologic
         log_info "Fetching sources for collector: #{collector_name} (#{collector_id})"
         sources = list(collector_id: collector_id)
 
-        {
-          'collector' => {
-            'id' => collector_id,
-            'name' => collector_name,
-            'collectorType' => collector['collectorType']
-          },
-          'sources' => sources
-        }
+        # Create model and convert to hash for backward compatibility
+        CollectorWithSources.new(
+          collector: collector,
+          sources: sources
+        ).to_h
       rescue StandardError => e
         log_error "Failed to fetch sources for collector #{collector_name}: #{e.message}"
         nil
-      end
-
-      def log_info(message)
-        warn "[Sumologic::Metadata::Source] #{message}" if ENV['SUMO_DEBUG'] || $DEBUG
-      end
-
-      def log_error(message)
-        warn "[Sumologic::Metadata::Source ERROR] #{message}"
       end
     end
   end

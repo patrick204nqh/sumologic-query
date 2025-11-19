@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative 'message_fetcher'
+require_relative 'record_fetcher'
 
 module Sumologic
   module Search
@@ -11,9 +12,10 @@ module Sumologic
         @config = config
         @poller = Poller.new(http_client: http_client, config: config)
         @message_fetcher = MessageFetcher.new(http_client: http_client, config: config)
+        @record_fetcher = RecordFetcher.new(http_client: http_client, config: config)
       end
 
-      # Execute a complete search workflow
+      # Execute a complete search workflow for raw messages
       # Returns array of messages
       def execute(query:, from_time:, to_time:, time_zone: 'UTC', limit: nil)
         job_id = create(query, from_time, to_time, time_zone)
@@ -21,6 +23,20 @@ module Sumologic
         messages = @message_fetcher.fetch_all(job_id, limit: limit)
         delete(job_id)
         messages
+      rescue StandardError => e
+        delete(job_id) if job_id
+        raise Error, "Search failed: #{e.message}"
+      end
+
+      # Execute a complete search workflow for aggregation records
+      # Use this for queries with: count by, group by, etc.
+      # Returns array of records
+      def execute_aggregation(query:, from_time:, to_time:, time_zone: 'UTC', limit: nil)
+        job_id = create(query, from_time, to_time, time_zone)
+        @poller.poll(job_id)
+        records = @record_fetcher.fetch_all(job_id, limit: limit)
+        delete(job_id)
+        records
       rescue StandardError => e
         delete(job_id) if job_id
         raise Error, "Search failed: #{e.message}"

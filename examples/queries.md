@@ -2,75 +2,55 @@
 
 Common patterns for querying Sumo Logic logs.
 
+> **Note:** For detailed time format options (relative times, timezones, Unix timestamps), see [time-formats.md](time-formats.md)
+
 ## Basic Search
 
 ```bash
-# Simple text search
-sumo-query search --query 'error' \
-  --from '2025-11-13T14:00:00' \
-  --to '2025-11-13T15:00:00'
+# Simple text search (last hour)
+sumo-query search -q 'error' -f '-1h' -t 'now'
 
 # Search with exact phrase
-sumo-query search --query '"connection timeout"' \
-  --from '2025-11-13T14:00:00' \
-  --to '2025-11-13T15:00:00'
+sumo-query search -q '"connection timeout"' -f '-30m' -t 'now'
 
 # Multiple keywords
-sumo-query search --query 'error AND database' \
-  --from '2025-11-13T14:00:00' \
-  --to '2025-11-13T15:00:00'
+sumo-query search -q 'error AND database' -f '-2h' -t 'now'
 ```
 
 ## Filtering
 
 ```bash
 # Filter by source category
-sumo-query search --query '_sourceCategory=prod/api error' \
-  --from '2025-11-13T14:00:00' \
-  --to '2025-11-13T15:00:00'
+sumo-query search -q '_sourceCategory=prod/api error' -f '-1h' -t 'now'
 
 # Filter by source name
-sumo-query search --query '_sourceName=api-server-01 error' \
-  --from '2025-11-13T14:00:00' \
-  --to '2025-11-13T15:00:00'
+sumo-query search -q '_sourceName=api-server-01 error' -f '-30m' -t 'now'
 
 # Multiple sources
-sumo-query search --query '(_sourceCategory=prod/api OR _sourceCategory=prod/web) AND error' \
-  --from '2025-11-13T14:00:00' \
-  --to '2025-11-13T15:00:00'
+sumo-query search -q '(_sourceCategory=prod/api OR _sourceCategory=prod/web) AND error' -f '-2h' -t 'now'
 ```
 
 ## Aggregations
 
 ```bash
 # Count messages
-sumo-query search --query 'error | count' \
-  --from '2025-11-13T14:00:00' \
-  --to '2025-11-13T15:00:00'
+sumo-query search -q 'error | count' -f '-1h' -t 'now'
 
 # Count by field
-sumo-query search --query '* | count by status_code' \
-  --from '2025-11-13T14:00:00' \
-  --to '2025-11-13T15:00:00'
+sumo-query search -q '* | count by status_code' -f '-1h' -t 'now'
 
 # Time series (5-minute buckets)
-sumo-query search --query 'error | timeslice 5m | count by _timeslice' \
-  --from '2025-11-13T14:00:00' \
-  --to '2025-11-13T15:00:00'
+sumo-query search -q 'error | timeslice 5m | count by _timeslice' -f '-24h' -t 'now'
 ```
 
 ## Parsing and Extraction
 
 ```bash
 # Parse fields
-sumo-query search --query '* | parse "user_id=* " as user_id | count by user_id' \
-  --from '2025-11-13T14:00:00' \
-  --to '2025-11-13T15:00:00'
+sumo-query search -q '* | parse "user_id=* " as user_id | count by user_id' -f '-1h' -t 'now'
 
 # Extract JSON fields
-sumo-query search --query '* | json field=_raw "user.id" as user_id' \
-  --from '2025-11-13T14:00:00' \
-  --to '2025-11-13T15:00:00'
+sumo-query search -q '* | json field=_raw "user.id" as user_id' -f '-1h' -t 'now'
 ```
 
 ## Metadata Operations
@@ -89,39 +69,34 @@ sumo-query sources | jq '.[] | select(.sources[].name | contains("production"))'
 ## Output Handling
 
 ```bash
-# Save to file
-sumo-query search --query 'error' \
-  --from '2025-11-13T14:00:00' \
-  --to '2025-11-13T15:00:00' \
-  --output results.json
+# Save to file (directories auto-created)
+sumo-query search -q 'error' -f '-1h' -t 'now' -o results.json
+
+# Nested directories
+sumo-query search -q 'error' -f '-7d' -t 'now' -o logs/weekly/errors.json
 
 # Limit results
-sumo-query search --query 'error' \
-  --from '2025-11-13T14:00:00' \
-  --to '2025-11-13T15:00:00' \
-  --limit 100
+sumo-query search -q 'error' -f '-1h' -t 'now' --limit 100
 
 # Format with jq
-sumo-query search --query 'error' \
-  --from '2025-11-13T14:00:00' \
-  --to '2025-11-13T15:00:00' | \
+sumo-query search -q 'error' -f '-1h' -t 'now' | \
   jq '.messages[] | {time: .map._messagetime, message: .map.message}'
 ```
 
-## Time Zones
+## Timezone Examples
 
 ```bash
 # Default UTC
-sumo-query search --query 'error' \
-  --from '2025-11-13T14:00:00' \
-  --to '2025-11-13T15:00:00'
+sumo-query search -q 'error' -f '-1h' -t 'now'
 
 # Specify timezone
-sumo-query search --query 'error' \
-  --from '2025-11-13T09:00:00' \
-  --to '2025-11-13T17:00:00' \
-  --time-zone 'America/New_York'
+sumo-query search -q 'error' -f '-1h' -t 'now' -z 'America/New_York'
+
+# Australian timezone
+sumo-query search -q 'error' -f '-1h' -t 'now' -z 'AEST'
 ```
+
+See [time-formats.md](time-formats.md) for comprehensive timezone options.
 
 ## Tips
 

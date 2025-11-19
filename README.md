@@ -8,8 +8,11 @@
 
 ## Why This Tool?
 
+- **Intuitive time parsing**: Use relative times like `-1h`, `-30m`, or `now` - no more calculating timestamps!
+- **Flexible timezone support**: US, Australian, and IANA timezone formats supported
 - **Minimal dependencies**: Uses only Ruby stdlib + Thor for CLI
 - **Fast queries**: Efficient polling and automatic pagination
+- **Interactive mode**: Explore logs with FZF-powered fuzzy search and preview
 - **Simple interface**: Just query, get results, done
 - **Read-only**: No write operations, perfect for safe log access
 - **Modular architecture**: Clean separation of concerns (HTTP, Search, Metadata)
@@ -62,7 +65,13 @@ export SUMO_DEPLOYMENT="us2"  # Optional: us1, us2 (default), eu, au, etc.
 ### 2. Run Your First Query
 
 ```bash
-# Search logs
+# Search logs from last hour (easy!)
+sumo-query search --query 'error' --from '-1h' --to 'now' --limit 10
+
+# Search logs from last 30 minutes
+sumo-query search --query 'error' --from '-30m' --to 'now'
+
+# Or use ISO 8601 format
 sumo-query search --query 'error' \
   --from '2025-11-13T14:00:00' \
   --to '2025-11-13T15:00:00' \
@@ -108,13 +117,13 @@ sumo-query search --query "YOUR_QUERY" \
 Explore your logs interactively with a powerful FZF-based interface:
 
 ```bash
-# Launch interactive mode
-sumo-query search --query 'error' \
-  --from '2025-11-13T14:00:00' \
-  --to '2025-11-13T15:00:00' \
-  --interactive
+# Launch interactive mode - last hour
+sumo-query search --query 'error' --from '-1h' --to 'now' --interactive
 
-# Or use the shorthand
+# Last 30 minutes with shorthand
+sumo-query search -q 'error' -f '-30m' -t 'now' -i
+
+# Or use ISO 8601 format
 sumo-query search -q 'error' -f '2025-11-13T14:00:00' -t '2025-11-13T15:00:00' -i
 ```
 
@@ -141,6 +150,27 @@ sumo-query search -q 'error' -f '2025-11-13T14:00:00' -t '2025-11-13T15:00:00' -
 - Install FZF: `brew install fzf` (macOS) or `apt-get install fzf` (Linux)
 - See: https://github.com/junegunn/fzf#installation
 
+### Time Format Examples
+
+Combine relative times with timezones for powerful queries:
+
+```bash
+# Last hour in Sydney time
+sumo-query search -q 'error' -f '-1h' -t 'now' -z AEST
+
+# Last 30 minutes in US Eastern time
+sumo-query search -q 'error' -f '-30m' -t 'now' -z EST
+
+# Last 7 days with output to file (directories auto-created)
+sumo-query search -q 'error' -f '-7d' -t 'now' -o logs/weekly/errors.json
+
+# Mix relative and ISO 8601 formats
+sumo-query search -q 'error' -f '-24h' -t '2025-11-19T12:00:00'
+
+# Unix timestamps from last hour to now
+sumo-query search -q 'error' -f '1700000000' -t 'now'
+```
+
 ### List Collectors
 
 ```bash
@@ -157,11 +187,8 @@ sumo-query sources [--output FILE]
 
 Lists all sources from active collectors.
 
-**See [examples/queries.md](examples/queries.md) for more query patterns and examples.**
 
 ## Ruby Library Usage
-
-Use the library directly in your Ruby code:
 
 ```ruby
 require 'sumologic'
@@ -182,34 +209,47 @@ results = client.search(
   limit: 1000
 )
 
-results.each do |message|
-  puts message['map']['message']
-end
-
-# List collectors
+# List collectors and sources
 collectors = client.list_collectors
-
-# List all sources
 sources = client.list_all_sources
 ```
 
-**See [docs/api-reference.md](docs/api-reference.md) for complete API documentation.**
+**Time parsing utilities:**
+
+```ruby
+require 'sumologic/utils/time_parser'
+
+# Parse relative times and timezones
+from_time = Sumologic::Utils::TimeParser.parse('-1h')
+timezone = Sumologic::Utils::TimeParser.parse_timezone('AEST')
+```
+
 
 ## Time Formats
 
-Use ISO 8601 format for timestamps:
+Multiple time formats are supported:
 
 ```bash
-# UTC timestamps (default)
---from "2025-11-13T14:30:00" --to "2025-11-13T15:00:00"
+# Relative time (easiest!)
+sumo-query search -q 'error' -f '-1h' -t 'now'
+sumo-query search -q 'error' -f '-30m' -t 'now'
 
-# With timezone
---from "2025-11-13T14:30:00" --time-zone "America/New_York"
+# ISO 8601
+sumo-query search -q 'error' -f '2025-11-13T14:00:00' -t '2025-11-13T15:00:00'
 
-# Using shell helpers
---from "$(date -u -v-1H '+%Y-%m-%dT%H:%M:%S')"  # 1 hour ago
---to "$(date -u '+%Y-%m-%dT%H:%M:%S')"          # now
+# Unix timestamps
+sumo-query search -q 'error' -f '1700000000' -t 'now'
+
+# With timezones
+sumo-query search -q 'error' -f '-1h' -t 'now' -z 'AEST'
+sumo-query search -q 'error' -f '-1h' -t 'now' -z 'America/New_York'
 ```
+
+**Supported time units:** `s`, `m`, `h`, `d`, `w`, `M`, `now`
+
+**Supported timezones:** IANA names (`UTC`, `America/New_York`, `Australia/Sydney`), US abbreviations (`EST`, `PST`), Australian abbreviations (`AEST`, `ACST`, `AWST`), UTC offsets (`+10:00`)
+
+See [examples/time-formats.md](examples/time-formats.md) for comprehensive examples.
 
 ## Output Format
 
@@ -253,11 +293,10 @@ Query execution time depends on data volume:
 
 ## Documentation
 
-- **[Quick Reference (tldr)](docs/tldr.md)** - Concise command examples in tldr format
-- **[Query Examples](examples/queries.md)** - Common query patterns and use cases
-- **[API Reference](docs/api-reference.md)** - Complete Ruby library documentation
-- **[Architecture](docs/architecture/)** - System design and architecture decisions
-- **[Troubleshooting](docs/troubleshooting.md)** - Common issues and solutions
+- **[Quick Reference (tldr)](docs/tldr.md)** - Concise command examples
+- **[Query Examples](examples/queries.md)** - Common query patterns
+- **[Time Format Examples](examples/time-formats.md)** - Time parsing and timezone options
+- **[Architecture](docs/architecture/)** - Design and architecture decisions
 
 ## Development
 
@@ -271,16 +310,19 @@ git clone https://github.com/patrick204nqh/sumologic-query.git
 cd sumologic-query
 bundle install
 
-# Run tests
+# Run tests (73+ specs including time parser tests)
 bundle exec rspec
 
 # Run linter
 bundle exec rubocop
 
-# Test locally
+# Test locally with new time formats
 bundle exec bin/sumo-query search --query "error" \
-  --from "2025-11-13T14:00:00" \
-  --to "2025-11-13T15:00:00"
+  --from "-1h" --to "now"
+
+# Test with timezone support
+bundle exec bin/sumo-query search --query "error" \
+  --from "-30m" --to "now" --time-zone "AEST"
 ```
 
 ## Contributing

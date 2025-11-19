@@ -23,7 +23,7 @@ module Sumologic
       # Initialize domain components
       @search = Search::Job.new(http_client: @http, config: @config)
       @collector = Metadata::Collector.new(http_client: @http)
-      @source = Metadata::Source.new(http_client: @http, collector_client: @collector)
+      @source = Metadata::Source.new(http_client: @http, collector_client: @collector, config: @config)
     end
 
     # Search logs with query

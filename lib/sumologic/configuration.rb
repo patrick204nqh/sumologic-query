@@ -4,7 +4,7 @@ module Sumologic
   # Centralized configuration for Sumo Logic client
   class Configuration
     attr_accessor :access_id, :access_key, :deployment, :timeout, :initial_poll_interval, :max_poll_interval,
-                  :poll_backoff_factor, :max_messages_per_request
+                  :poll_backoff_factor, :max_messages_per_request, :max_workers, :request_delay
 
     API_VERSION = 'v1'
 
@@ -22,6 +22,10 @@ module Sumologic
       # Timeouts and limits
       @timeout = 300 # seconds (5 minutes)
       @max_messages_per_request = 10_000
+
+      # Rate limiting (default: 5 workers, 250ms delay)
+      @max_workers = ENV.fetch('SUMO_MAX_WORKERS', '5').to_i
+      @request_delay = ENV.fetch('SUMO_REQUEST_DELAY', '0.25').to_f
     end
 
     def base_url

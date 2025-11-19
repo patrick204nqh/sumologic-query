@@ -2,15 +2,57 @@
 
 Common patterns for querying Sumo Logic logs.
 
-> **Note:** For detailed time format options (relative times, timezones, Unix timestamps), see [time-formats.md](time-formats.md)
+## Time Formats
+
+### Relative Time (Recommended)
+
+```bash
+# Last 30 minutes
+sumo-query search -q 'error' -f '-30m' -t 'now'
+
+# Last hour
+sumo-query search -q 'error' -f '-1h' -t 'now'
+
+# Last 7 days
+sumo-query search -q 'error' -f '-7d' -t 'now' --limit 100
+```
+
+**Supported units:** `s` (seconds), `m` (minutes), `h` (hours), `d` (days), `w` (weeks), `M` (months), `now`
+
+### Other Formats
+
+```bash
+# ISO 8601
+sumo-query search -q 'error' -f '2025-11-13T14:00:00' -t '2025-11-13T15:00:00'
+
+# Unix timestamp
+sumo-query search -q 'error' -f '1700000000' -t 'now'
+
+# Mix formats
+sumo-query search -q 'error' -f '-24h' -t '2025-11-19T12:00:00'
+```
+
+### Timezones
+
+```bash
+# US timezones
+sumo-query search -q 'error' -f '-1h' -t 'now' -z 'EST'
+sumo-query search -q 'error' -f '-1h' -t 'now' -z 'America/New_York'
+
+# Australian timezones
+sumo-query search -q 'error' -f '-1h' -t 'now' -z 'AEST'
+sumo-query search -q 'error' -f '-1h' -t 'now' -z 'Australia/Sydney'
+
+# Other formats: PST, CST, MST, ACST, AWST, Europe/London, +10:00
+```
 
 ## Basic Search
 
 ```bash
-# Simple text search (last hour)
+# Simple text search
 sumo-query search -q 'error' -f '-1h' -t 'now'
 
-# Search with exact phrase
+# Exact phrase
 sumo-query search -q '"connection timeout"' -f '-30m' -t 'now'
 
 # Multiple keywords
@@ -53,20 +95,7 @@ sumo-query search -q '* | parse "user_id=* " as user_id | count by user_id' -f '
 sumo-query search -q '* | json field=_raw "user.id" as user_id' -f '-1h' -t 'now'
 ```
 
-## Metadata Operations
-
-```bash
-# List all collectors
-sumo-query collectors --output collectors.json
-
-# List all sources
-sumo-query sources --output sources.json
-
-# Filter sources with jq
-sumo-query sources | jq '.[] | select(.sources[].name | contains("production"))'
-```
-
-## Output Handling
+## Output Options
 
 ```bash
 # Save to file (directories auto-created)
@@ -78,32 +107,75 @@ sumo-query search -q 'error' -f '-7d' -t 'now' -o logs/weekly/errors.json
 # Limit results
 sumo-query search -q 'error' -f '-1h' -t 'now' --limit 100
 
+# Interactive mode
+sumo-query search -q 'error' -f '-1h' -t 'now' -i
+
 # Format with jq
 sumo-query search -q 'error' -f '-1h' -t 'now' | \
   jq '.messages[] | {time: .map._messagetime, message: .map.message}'
 ```
 
-## Timezone Examples
+## Metadata Operations
 
 ```bash
-# Default UTC
-sumo-query search -q 'error' -f '-1h' -t 'now'
+# List all collectors
+sumo-query collectors -o collectors.json
 
-# Specify timezone
-sumo-query search -q 'error' -f '-1h' -t 'now' -z 'America/New_York'
+# List all sources
+sumo-query sources -o sources.json
 
-# Australian timezone
-sumo-query search -q 'error' -f '-1h' -t 'now' -z 'AEST'
+# Filter sources with jq
+sumo-query sources | jq '.[] | select(.sources[].name | contains("production"))'
 ```
 
-See [time-formats.md](time-formats.md) for comprehensive timezone options.
+## Common Patterns
+
+```bash
+# Last hour errors in production
+sumo-query search -q '_sourceCategory=prod/* error' -f '-1h' -t 'now'
+
+# Today's business hours (9 AM - 5 PM Sydney time)
+sumo-query search -q 'error' \
+  -f '2025-11-19T09:00:00' \
+  -t '2025-11-19T17:00:00' \
+  -z 'Australia/Sydney'
+
+# Last 24 hours with rate limit safety
+export SUMO_MAX_WORKERS=2
+sumo-query search -q 'error' -f '-24h' -t 'now' -o daily-errors.json
+```
+
+## Ruby API
+
+```ruby
+require 'sumologic'
+require 'sumologic/utils/time_parser'
+
+client = Sumologic::Client.new(
+  access_id: ENV['SUMO_ACCESS_ID'],
+  access_key: ENV['SUMO_ACCESS_KEY']
+)
+
+# Search with relative times
+from_time = Sumologic::Utils::TimeParser.parse('-1h')
+to_time = Sumologic::Utils::TimeParser.parse('now')
+
+results = client.search(
+  query: 'error',
+  from_time: from_time,
+  to_time: to_time,
+  time_zone: 'UTC',
+  limit: 1000
+)
+```
 
 ## Tips
 
+- **Use relative times** for ad-hoc queries (`-1h`, `-30m`)
 - **Narrow time ranges** for faster queries
 - **Add source filters** to reduce data volume
 - **Use aggregations** instead of raw messages when possible
-- **Test queries** in Sumo Logic UI first
 - **Use `--limit`** for large result sets
+- **Test queries** in Sumo Logic UI first
 
 For full query language documentation, see [Sumo Logic Search Reference](https://help.sumologic.com/docs/search/).

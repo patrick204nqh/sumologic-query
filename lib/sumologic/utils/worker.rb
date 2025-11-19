@@ -9,12 +9,23 @@ module Sumologic
     # (metadata fetching, search pagination, etc.) into a reusable component.
     #
     # Example:
-    #   worker = Worker.new
+    #   worker = Worker.new(max_threads: 3, request_delay: 0.2)
     #   results = worker.execute(items) do |item|
     #     fetch_data(item)
     #   end
     class Worker
-      MAX_THREADS = 10
+      DEFAULT_MAX_THREADS = 10
+      DEFAULT_REQUEST_DELAY = 0.0
+
+      attr_reader :max_threads, :request_delay
+
+      # Initialize worker pool
+      # @param max_threads [Integer] Maximum number of concurrent threads
+      # @param request_delay [Float] Delay in seconds between requests (for rate limiting)
+      def initialize(max_threads: DEFAULT_MAX_THREADS, request_delay: DEFAULT_REQUEST_DELAY)
+        @max_threads = max_threads
+        @request_delay = request_delay
+      end
 
       # Execute work items using a thread pool
       # Returns array of results from the block execution
@@ -39,7 +50,7 @@ module Sumologic
         }
 
         queue = create_work_queue(items)
-        worker_count = [MAX_THREADS, queue.size].min
+        worker_count = [@max_threads, queue.size].min
 
         # Callback: start
         callbacks[:start]&.call(worker_count, items.size)
@@ -64,7 +75,7 @@ module Sumologic
       end
 
       def create_workers(queue, context, &block)
-        worker_count = [MAX_THREADS, queue.size].min
+        worker_count = [@max_threads, queue.size].min
 
         Array.new(worker_count) do
           Thread.new { process_queue(queue, context, &block) }
@@ -75,6 +86,9 @@ module Sumologic
         until queue.empty?
           item = pop_safely(queue)
           break unless item
+
+          # Add delay before processing to avoid rate limits
+          sleep(@request_delay) if @request_delay.positive?
 
           process_item(item, context[:result], context[:mutex], &block)
 

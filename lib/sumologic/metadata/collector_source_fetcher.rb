@@ -5,10 +5,14 @@ require_relative '../utils/worker'
 module Sumologic
   module Metadata
     # Fetches sources from multiple collectors efficiently
-    # Uses Worker utility for concurrent fetching
+    # Uses Worker utility for concurrent fetching with rate limiting
     class CollectorSourceFetcher
-      def initialize
-        @worker = Utils::Worker.new
+      def initialize(config: nil)
+        @config = config || Configuration.new
+        @worker = Utils::Worker.new(
+          max_threads: @config.max_workers,
+          request_delay: @config.request_delay
+        )
       end
 
       # Fetch sources for collectors concurrently

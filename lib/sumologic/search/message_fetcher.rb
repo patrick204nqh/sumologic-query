@@ -12,7 +12,10 @@ module Sumologic
       def initialize(http_client:, config:)
         @http = http_client
         @config = config
-        @worker = Utils::Worker.new
+        @worker = Utils::Worker.new(
+          max_threads: @config.max_workers,
+          request_delay: @config.request_delay
+        )
       end
 
       # Fetch all messages for a job with automatic pagination

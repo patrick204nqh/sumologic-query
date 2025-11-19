@@ -232,24 +232,17 @@ Multiple time formats are supported:
 ```bash
 # Relative time (easiest!)
 sumo-query search -q 'error' -f '-1h' -t 'now'
-sumo-query search -q 'error' -f '-30m' -t 'now'
 
 # ISO 8601
 sumo-query search -q 'error' -f '2025-11-13T14:00:00' -t '2025-11-13T15:00:00'
 
-# Unix timestamps
-sumo-query search -q 'error' -f '1700000000' -t 'now'
-
 # With timezones
 sumo-query search -q 'error' -f '-1h' -t 'now' -z 'AEST'
-sumo-query search -q 'error' -f '-1h' -t 'now' -z 'America/New_York'
 ```
 
-**Supported time units:** `s`, `m`, `h`, `d`, `w`, `M`, `now`
+**Supported:** Relative times (`-1h`, `-30m`, `-7d`), ISO 8601, Unix timestamps, IANA timezones, US/Australian abbreviations
 
-**Supported timezones:** IANA names (`UTC`, `America/New_York`, `Australia/Sydney`), US abbreviations (`EST`, `PST`), Australian abbreviations (`AEST`, `ACST`, `AWST`), UTC offsets (`+10:00`)
-
-See [examples/time-formats.md](examples/time-formats.md) for comprehensive examples.
+See [Query Examples](examples/queries.md) for more time format options.
 
 ## Output Format
 
@@ -291,11 +284,27 @@ Query execution time depends on data volume:
 - Use `--limit` to cap results
 - Use aggregation queries instead of raw messages
 
+### Rate Limiting
+
+The tool respects Sumo Logic's API rate limits (4 req/sec per user, 10 concurrent requests). Defaults use 5 workers with 250ms delays. Adjust if needed:
+
+```bash
+# Faster (higher risk)
+export SUMO_MAX_WORKERS=8
+export SUMO_REQUEST_DELAY=0.15
+
+# Safer (slower)
+export SUMO_MAX_WORKERS=2
+export SUMO_REQUEST_DELAY=0.5
+```
+
+See [Rate Limiting Guide](docs/rate-limiting.md) for details.
+
 ## Documentation
 
 - **[Quick Reference (tldr)](docs/tldr.md)** - Concise command examples
-- **[Query Examples](examples/queries.md)** - Common query patterns
-- **[Time Format Examples](examples/time-formats.md)** - Time parsing and timezone options
+- **[Query Examples](examples/queries.md)** - Query patterns, time formats, and timezones
+- **[Rate Limiting](docs/rate-limiting.md)** - Configure API rate limits and workers
 - **[Architecture](docs/architecture/)** - Design and architecture decisions
 
 ## Development

@@ -6,10 +6,11 @@ module Sumologic
   module Metadata
     # Handles source metadata operations
     class Source
-      def initialize(http_client:, collector_client:)
+      def initialize(http_client:, collector_client:, config: nil)
         @http = http_client
         @collector_client = collector_client
-        @fetcher = CollectorSourceFetcher.new
+        @config = config
+        @fetcher = CollectorSourceFetcher.new(config: @config)
       end
 
       # List sources for a specific collector

@@ -10,13 +10,20 @@ module Sumologic
       @config = config || Configuration.new
       @config.validate!
 
-      # Initialize HTTP layer
+      # Initialize HTTP layer (v1 API)
       authenticator = Http::Authenticator.new(
         access_id: @config.access_id,
         access_key: @config.access_key
       )
       @http = Http::Client.new(
         base_url: @config.base_url,
+        authenticator: authenticator,
+        config: @config
+      )
+
+      # Initialize HTTP layer for v2 API (Content Library)
+      @http_v2 = Http::Client.new(
+        base_url: @config.base_url_v2,
         authenticator: authenticator,
         config: @config
       )
@@ -30,6 +37,9 @@ module Sumologic
         search_job: @search,
         config: @config
       )
+      @monitor = Metadata::Monitor.new(http_client: @http)
+      @folder = Metadata::Folder.new(http_client: @http_v2) # Uses v2 API
+      @dashboard = Metadata::Dashboard.new(http_client: @http)
     end
 
     # Search logs with query
@@ -101,6 +111,101 @@ module Sumologic
         time_zone: time_zone,
         filter: filter
       )
+    end
+
+    # ============================================================
+    # Monitors API
+    # ============================================================
+
+    # List all monitors
+    # Returns array of monitor objects
+    #
+    # @param limit [Integer] Maximum monitors to return (default: 100)
+    def list_monitors(limit: 100)
+      @monitor.list(limit: limit)
+    end
+
+    # Get a specific monitor by ID
+    # Returns full monitor details
+    #
+    # @param monitor_id [String] The monitor ID
+    def get_monitor(monitor_id:)
+      @monitor.get(monitor_id)
+    end
+
+    # Get the root monitors folder
+    # Returns folder with monitors hierarchy
+    def monitors_root
+      @monitor.root
+    end
+
+    # Search monitors by name or description
+    #
+    # @param query [String] Search query
+    # @param limit [Integer] Maximum results
+    def search_monitors(query:, limit: 100)
+      @monitor.search(query: query, limit: limit)
+    end
+
+    # ============================================================
+    # Folders API (Content Library)
+    # ============================================================
+
+    # Get the personal folder for current user
+    # Returns folder with children
+    def personal_folder
+      @folder.personal
+    end
+
+    # Get the global (admin) folder
+    # Requires admin privileges
+    def global_folder
+      @folder.global
+    end
+
+    # Get a specific folder by ID
+    # Returns folder details with children
+    #
+    # @param folder_id [String] The folder ID
+    def get_folder(folder_id:)
+      @folder.get(folder_id)
+    end
+
+    # Get folder tree starting from a folder
+    # Recursively fetches children up to max_depth
+    #
+    # @param folder_id [String, nil] Starting folder ID (nil for personal)
+    # @param max_depth [Integer] Maximum recursion depth (default: 3)
+    def folder_tree(folder_id: nil, max_depth: 3)
+      @folder.tree(folder_id: folder_id, max_depth: max_depth)
+    end
+
+    # ============================================================
+    # Dashboards API
+    # ============================================================
+
+    # List all dashboards
+    # Returns array of dashboard objects
+    #
+    # @param limit [Integer] Maximum dashboards to return (default: 100)
+    def list_dashboards(limit: 100)
+      @dashboard.list(limit: limit)
+    end
+
+    # Get a specific dashboard by ID
+    # Returns full dashboard details including panels
+    #
+    # @param dashboard_id [String] The dashboard ID
+    def get_dashboard(dashboard_id:)
+      @dashboard.get(dashboard_id)
+    end
+
+    # Search dashboards by title or description
+    #
+    # @param query [String] Search query
+    # @param limit [Integer] Maximum results
+    def search_dashboards(query:, limit: 100)
+      @dashboard.search(query: query, limit: limit)
     end
   end
 end

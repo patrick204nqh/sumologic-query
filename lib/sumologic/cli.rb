@@ -6,6 +6,11 @@ require_relative 'cli/commands/search_command'
 require_relative 'cli/commands/list_collectors_command'
 require_relative 'cli/commands/list_sources_command'
 require_relative 'cli/commands/discover_sources_command'
+require_relative 'cli/commands/list_monitors_command'
+require_relative 'cli/commands/get_monitor_command'
+require_relative 'cli/commands/list_folders_command'
+require_relative 'cli/commands/list_dashboards_command'
+require_relative 'cli/commands/get_dashboard_command'
 
 module Sumologic
   # Thor-based CLI for Sumo Logic query tool
@@ -143,6 +148,110 @@ module Sumologic
     def discover_sources
       Commands::DiscoverSourcesCommand.new(options, create_client).execute
     end
+
+    # ============================================================
+    # Monitors Commands
+    # ============================================================
+
+    desc 'list-monitors', 'List all monitors (alerts)'
+    long_desc <<~DESC
+      List all monitors in your Sumo Logic account.
+      Monitors are alerting rules that trigger based on log queries.
+
+      Examples:
+        # List all monitors
+        sumo-query list-monitors
+
+        # List monitors with limit
+        sumo-query list-monitors --limit 50
+
+        # Save to file
+        sumo-query list-monitors --output monitors.json
+    DESC
+    option :limit, type: :numeric, aliases: '-l', default: 100, desc: 'Maximum monitors to return'
+    def list_monitors
+      Commands::ListMonitorsCommand.new(options, create_client).execute
+    end
+
+    desc 'get-monitor', 'Get a specific monitor by ID'
+    long_desc <<~DESC
+      Get detailed information about a specific monitor.
+
+      Example:
+        sumo-query get-monitor --monitor-id 0000000000123456
+    DESC
+    option :monitor_id, type: :string, required: true, desc: 'Monitor ID'
+    def get_monitor
+      Commands::GetMonitorCommand.new(options, create_client).execute
+    end
+
+    # ============================================================
+    # Folders Commands (Content Library)
+    # ============================================================
+
+    desc 'list-folders', 'List folders in content library'
+    long_desc <<~DESC
+      List folders in the Sumo Logic content library.
+      By default, shows your personal folder.
+
+      Examples:
+        # List personal folder contents
+        sumo-query list-folders
+
+        # List specific folder
+        sumo-query list-folders --folder-id 0000000000123456
+
+        # Get folder tree (recursive)
+        sumo-query list-folders --tree --depth 3
+
+        # Save to file
+        sumo-query list-folders --output folders.json
+    DESC
+    option :folder_id, type: :string, desc: 'Folder ID to list (default: personal folder)'
+    option :tree, type: :boolean, desc: 'Fetch recursive tree structure'
+    option :depth, type: :numeric, default: 3, desc: 'Maximum tree depth (default: 3)'
+    def list_folders
+      Commands::ListFoldersCommand.new(options, create_client).execute
+    end
+
+    # ============================================================
+    # Dashboards Commands
+    # ============================================================
+
+    desc 'list-dashboards', 'List all dashboards'
+    long_desc <<~DESC
+      List all dashboards in your Sumo Logic account.
+
+      Examples:
+        # List all dashboards
+        sumo-query list-dashboards
+
+        # List dashboards with limit
+        sumo-query list-dashboards --limit 50
+
+        # Save to file
+        sumo-query list-dashboards --output dashboards.json
+    DESC
+    option :limit, type: :numeric, aliases: '-l', default: 100, desc: 'Maximum dashboards to return'
+    def list_dashboards
+      Commands::ListDashboardsCommand.new(options, create_client).execute
+    end
+
+    desc 'get-dashboard', 'Get a specific dashboard by ID'
+    long_desc <<~DESC
+      Get detailed information about a specific dashboard including panels.
+
+      Example:
+        sumo-query get-dashboard --dashboard-id 0000000000123456
+    DESC
+    option :dashboard_id, type: :string, required: true, desc: 'Dashboard ID'
+    def get_dashboard
+      Commands::GetDashboardCommand.new(options, create_client).execute
+    end
+
+    # ============================================================
+    # Utility Commands
+    # ============================================================
 
     desc 'version', 'Show version information'
     def version

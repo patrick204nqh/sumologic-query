@@ -40,6 +40,11 @@ module Sumologic
       @base_url ||= build_base_url
     end
 
+    # Base URL for v2 API endpoints (Content Library, etc.)
+    def base_url_v2
+      @base_url_v2 ||= build_base_url('v2')
+    end
+
     def validate!
       raise AuthenticationError, 'SUMO_ACCESS_ID not set' unless @access_id
       raise AuthenticationError, 'SUMO_ACCESS_KEY not set' unless @access_key
@@ -47,20 +52,21 @@ module Sumologic
 
     private
 
-    def build_base_url
+    def build_base_url(version = API_VERSION)
       case @deployment
       when /^http/
-        @deployment # Full URL provided
+        # Full URL provided - replace version if present
+        @deployment.sub(%r{/api/v\d+}, "/api/#{version}")
       when 'us1'
-        "https://api.sumologic.com/api/#{API_VERSION}"
+        "https://api.sumologic.com/api/#{version}"
       when 'us2'
-        "https://api.us2.sumologic.com/api/#{API_VERSION}"
+        "https://api.us2.sumologic.com/api/#{version}"
       when 'eu'
-        "https://api.eu.sumologic.com/api/#{API_VERSION}"
+        "https://api.eu.sumologic.com/api/#{version}"
       when 'au'
-        "https://api.au.sumologic.com/api/#{API_VERSION}"
+        "https://api.au.sumologic.com/api/#{version}"
       else
-        "https://api.#{@deployment}.sumologic.com/api/#{API_VERSION}"
+        "https://api.#{@deployment}.sumologic.com/api/#{version}"
       end
     end
   end

@@ -25,7 +25,7 @@ module Sumologic
       # Check if response indicates a retryable error
       def retryable?(response)
         code = response.code.to_i
-        code == 429 || (code >= 500 && code <= 599)
+        code == 429 || code.between?(500, 599)
       end
 
       # Extract rate limit info from response headers
@@ -75,7 +75,7 @@ module Sumologic
       def parse_retry_after(response)
         # Try Retry-After header first (standard HTTP)
         retry_after = response['Retry-After']
-        return retry_after.to_i if retry_after && retry_after.match?(/^\d+$/)
+        return retry_after.to_i if retry_after&.match?(/^\d+$/)
 
         # Try X-RateLimit-Reset (common alternative)
         reset = response['X-RateLimit-Reset']

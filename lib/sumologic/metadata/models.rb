@@ -104,6 +104,136 @@ module Sumologic
         @sources.size
       end
     end
+
+    # Value object representing a Sumo Logic Monitor
+    class MonitorModel
+      attr_reader :id, :name, :description, :type, :status, :content_type,
+                  :monitor_type, :is_disabled, :is_mutable, :created_at, :modified_at
+
+      def initialize(data)
+        @id = data['id']
+        @name = data['name']
+        @description = data['description']
+        @type = data['type']
+        @status = data['status']
+        @content_type = data['contentType']
+        @monitor_type = data['monitorType']
+        @is_disabled = data['isDisabled']
+        @is_mutable = data['isMutable']
+        @created_at = data['createdAt']
+        @modified_at = data['modifiedAt']
+        @raw_data = data
+      end
+
+      # Convert to hash for JSON serialization
+      def to_h
+        {
+          'id' => @id,
+          'name' => @name,
+          'description' => @description,
+          'type' => @type,
+          'status' => @status,
+          'contentType' => @content_type,
+          'monitorType' => @monitor_type,
+          'isDisabled' => @is_disabled,
+          'isMutable' => @is_mutable,
+          'createdAt' => @created_at,
+          'modifiedAt' => @modified_at
+        }.compact
+      end
+
+      # Get full raw data (useful for detailed view)
+      def to_full_h
+        @raw_data
+      end
+
+      def enabled?
+        !@is_disabled
+      end
+
+      def disabled?
+        @is_disabled == true
+      end
+    end
+
+    # Value object representing a Sumo Logic Folder
+    class FolderModel
+      attr_reader :id, :name, :description, :item_type, :parent_id,
+                  :created_at, :created_by, :modified_at, :modified_by
+
+      def initialize(data)
+        @id = data['id']
+        @name = data['name']
+        @description = data['description']
+        @item_type = data['itemType']
+        @parent_id = data['parentId']
+        @created_at = data['createdAt']
+        @created_by = data['createdBy']
+        @modified_at = data['modifiedAt']
+        @modified_by = data['modifiedBy']
+        @children = data['children'] || []
+        @raw_data = data
+      end
+
+      # Convert to hash for JSON serialization
+      def to_h
+        {
+          'id' => @id,
+          'name' => @name,
+          'description' => @description,
+          'itemType' => @item_type,
+          'parentId' => @parent_id,
+          'createdAt' => @created_at,
+          'createdBy' => @created_by,
+          'modifiedAt' => @modified_at,
+          'modifiedBy' => @modified_by
+        }.compact
+      end
+
+      # Get full raw data including children
+      def to_full_h
+        @raw_data
+      end
+
+      def children
+        @children.map { |c| FolderModel.new(c) }
+      end
+
+      def folder?
+        @item_type == 'Folder'
+      end
+    end
+
+    # Value object representing a Sumo Logic Dashboard
+    class DashboardModel
+      attr_reader :id, :title, :description, :folder_id, :created_at, :modified_at
+
+      def initialize(data)
+        @id = data['id']
+        @title = data['title']
+        @description = data['description']
+        @folder_id = data['folderId']
+        @created_at = data['createdAt']
+        @modified_at = data['modifiedAt']
+        @raw_data = data
+      end
+
+      # Convert to hash for JSON serialization
+      def to_h
+        {
+          'id' => @id,
+          'title' => @title,
+          'description' => @description,
+          'folderId' => @folder_id,
+          'createdAt' => @created_at,
+          'modifiedAt' => @modified_at
+        }.compact
+      end
+
+      # Get full raw data (useful for detailed view)
+      def to_full_h
+        @raw_data
+      end
+    end
   end
 end
-

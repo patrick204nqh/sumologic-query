@@ -107,7 +107,7 @@ module Sumologic
         # Use Retry-After header if available (for rate limits)
         if response
           info = @response_handler.extract_rate_limit_info(response)
-          return info[:retry_after] if info[:retry_after] && info[:retry_after] > 0
+          return info[:retry_after] if info[:retry_after]&.positive?
         end
 
         # Exponential backoff with jitter

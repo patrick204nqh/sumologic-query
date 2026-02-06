@@ -107,5 +107,52 @@ RSpec.describe Sumologic::Client do
     it 'responds to discover_dynamic_sources' do
       expect(client).to respond_to(:discover_dynamic_sources)
     end
+
+    # Monitors API
+    it 'responds to list_monitors' do
+      expect(client).to respond_to(:list_monitors)
+    end
+
+    it 'responds to get_monitor' do
+      expect(client).to respond_to(:get_monitor)
+    end
+
+    it 'responds to monitors_root' do
+      expect(client).to respond_to(:monitors_root)
+    end
+
+    it 'responds to search_monitors' do
+      expect(client).to respond_to(:search_monitors)
+    end
+
+    # Folders API
+    it 'responds to personal_folder' do
+      expect(client).to respond_to(:personal_folder)
+    end
+
+    it 'responds to global_folder' do
+      expect(client).to respond_to(:global_folder)
+    end
+
+    it 'responds to get_folder' do
+      expect(client).to respond_to(:get_folder)
+    end
+
+    it 'responds to folder_tree' do
+      expect(client).to respond_to(:folder_tree)
+    end
+
+    # Dashboards API
+    it 'responds to list_dashboards' do
+      expect(client).to respond_to(:list_dashboards)
+    end
+
+    it 'responds to get_dashboard' do
+      expect(client).to respond_to(:get_dashboard)
+    end
+
+    it 'responds to search_dashboards' do
+      expect(client).to respond_to(:search_dashboards)
+    end
   end
 end

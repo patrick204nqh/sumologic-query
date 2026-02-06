@@ -50,6 +50,9 @@ require_relative 'sumologic/metadata/collector'
 require_relative 'sumologic/metadata/collector_source_fetcher'
 require_relative 'sumologic/metadata/source'
 require_relative 'sumologic/metadata/dynamic_source_discovery'
+require_relative 'sumologic/metadata/monitor'
+require_relative 'sumologic/metadata/folder'
+require_relative 'sumologic/metadata/dashboard'
 
 # Load main client (facade)
 require_relative 'sumologic/client'

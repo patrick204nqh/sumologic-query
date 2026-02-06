@@ -365,3 +365,4 @@ Potential improvements (not implemented yet):
 This command fills a critical gap in the Sumo Logic tooling ecosystem. While the Collectors API tells you what **should** be sending logs, `discover-sources` tells you what **actually is** sending logs - crucial difference for dynamic AWS environments.
 
 **Key Insight**: Configuration ≠ Reality. In modern cloud environments, you need both perspectives.
+

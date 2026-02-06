@@ -34,6 +34,21 @@ RSpec.describe Sumologic::Configuration do
       expect(config.max_messages_per_request).to eq(10_000)
     end
 
+    it 'sets default timeout values' do
+      config = described_class.new
+
+      expect(config.connect_timeout).to eq(10)
+      expect(config.read_timeout).to eq(60)
+    end
+
+    it 'sets default retry values' do
+      config = described_class.new
+
+      expect(config.max_retries).to eq(3)
+      expect(config.retry_base_delay).to eq(1.0)
+      expect(config.retry_max_delay).to eq(30.0)
+    end
+
     it 'defaults to us2 deployment' do
       config = described_class.new
 

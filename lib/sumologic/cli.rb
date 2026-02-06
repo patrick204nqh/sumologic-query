@@ -34,6 +34,10 @@ module Sumologic
         • Unix timestamp: '1700000000' (seconds since epoch)
         • ISO 8601: '2025-11-13T14:00:00'
 
+      Aggregation Mode (--aggregate):
+        Use --aggregate (-a) for queries with count, sum, avg, group by, etc.
+        Returns aggregation records instead of raw log messages.
+
       Examples:
         # Last 30 minutes
         sumo-query search --query 'error' --from '-30m' --to 'now'
@@ -53,6 +57,14 @@ module Sumologic
         # Interactive mode with FZF
         sumo-query search --query 'error' \\
           --from '-1h' --to 'now' --interactive
+
+        # Aggregation query (count by source)
+        sumo-query search --query '* | count by _sourceCategory' \\
+          --from '-1h' --to 'now' --aggregate
+
+        # Top errors by count
+        sumo-query search --query 'error | count by _sourceHost | top 10' \\
+          --from '-24h' --to 'now' --aggregate
     DESC
     option :query, type: :string, required: true, aliases: '-q', desc: 'Search query'
     option :from, type: :string, required: true, aliases: '-f', desc: 'Start time (now, -30m, unix timestamp, ISO 8601)'
@@ -60,6 +72,7 @@ module Sumologic
     option :time_zone, type: :string, default: 'UTC', aliases: '-z',
                        desc: 'Time zone (UTC, EST, AEST, +00:00, America/New_York, Australia/Sydney)'
     option :limit, type: :numeric, aliases: '-l', desc: 'Maximum messages to return'
+    option :aggregate, type: :boolean, aliases: '-a', desc: 'Return aggregation records (for count/group by queries)'
     option :interactive, type: :boolean, aliases: '-i', desc: 'Launch interactive browser (requires fzf)'
     def search
       Commands::SearchCommand.new(options, create_client).execute

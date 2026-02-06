@@ -7,12 +7,14 @@ module Sumologic
     # Thread-safe connection pool for HTTP clients
     # Allows multiple threads to have their own connections
     class ConnectionPool
-      READ_TIMEOUT = 60
-      OPEN_TIMEOUT = 10
+      DEFAULT_READ_TIMEOUT = 60
+      DEFAULT_OPEN_TIMEOUT = 10
 
-      def initialize(base_url:, max_connections: 10)
+      def initialize(base_url:, max_connections: 10, read_timeout: nil, connect_timeout: nil)
         @base_url = base_url
         @max_connections = max_connections
+        @read_timeout = read_timeout || DEFAULT_READ_TIMEOUT
+        @connect_timeout = connect_timeout || DEFAULT_OPEN_TIMEOUT
         @pool = []
         @mutex = Mutex.new
       end
@@ -83,8 +85,8 @@ module Sumologic
       def create_connection(uri)
         http = Net::HTTP.new(uri.host, uri.port)
         http.use_ssl = true
-        http.read_timeout = READ_TIMEOUT
-        http.open_timeout = OPEN_TIMEOUT
+        http.read_timeout = @read_timeout
+        http.open_timeout = @connect_timeout
         http.keep_alive_timeout = 30
 
         # SSL configuration

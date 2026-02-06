@@ -106,3 +106,4 @@ module Sumologic
     end
   end
 end
+

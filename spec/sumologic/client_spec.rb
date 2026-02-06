@@ -88,6 +88,10 @@ RSpec.describe Sumologic::Client do
       expect(client).to respond_to(:search)
     end
 
+    it 'responds to search_aggregation' do
+      expect(client).to respond_to(:search_aggregation)
+    end
+
     it 'responds to list_collectors' do
       expect(client).to respond_to(:list_collectors)
     end
@@ -98,6 +102,10 @@ RSpec.describe Sumologic::Client do
 
     it 'responds to list_all_sources' do
       expect(client).to respond_to(:list_all_sources)
+    end
+
+    it 'responds to discover_dynamic_sources' do
+      expect(client).to respond_to(:discover_dynamic_sources)
     end
   end
 end

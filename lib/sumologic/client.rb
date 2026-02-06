@@ -17,7 +17,8 @@ module Sumologic
       )
       @http = Http::Client.new(
         base_url: @config.base_url,
-        authenticator: authenticator
+        authenticator: authenticator,
+        config: @config
       )
 
       # Initialize domain components
@@ -34,9 +35,31 @@ module Sumologic
     # Search logs with query
     # Returns array of messages
     #
+    # @param query [String] Sumo Logic query
+    # @param from_time [String] Start time (ISO 8601, unix timestamp, or relative)
+    # @param to_time [String] End time
+    # @param time_zone [String] Time zone (default: UTC)
     # @param limit [Integer, nil] Maximum number of messages to return (stops fetching after limit)
     def search(query:, from_time:, to_time:, time_zone: 'UTC', limit: nil)
       @search.execute(
+        query: query,
+        from_time: from_time,
+        to_time: to_time,
+        time_zone: time_zone,
+        limit: limit
+      )
+    end
+
+    # Search with aggregation query (count by, group by, etc.)
+    # Returns array of aggregation records instead of raw messages
+    #
+    # @param query [String] Sumo Logic aggregation query (must include count, sum, avg, etc.)
+    # @param from_time [String] Start time (ISO 8601, unix timestamp, or relative)
+    # @param to_time [String] End time
+    # @param time_zone [String] Time zone (default: UTC)
+    # @param limit [Integer, nil] Maximum number of records to return
+    def search_aggregation(query:, from_time:, to_time:, time_zone: 'UTC', limit: nil)
+      @search.execute_aggregation(
         query: query,
         from_time: from_time,
         to_time: to_time,

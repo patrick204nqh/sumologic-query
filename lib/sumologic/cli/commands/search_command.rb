@@ -52,36 +52,66 @@ module Sumologic
         end
 
         def perform_search
-          client.search(
-            query: options[:query],
-            from_time: @parsed_from,
-            to_time: @parsed_to,
-            time_zone: @parsed_timezone,
-            limit: options[:limit]
-          )
+          if options[:aggregate]
+            client.search_aggregation(
+              query: options[:query],
+              from_time: @parsed_from,
+              to_time: @parsed_to,
+              time_zone: @parsed_timezone,
+              limit: options[:limit]
+            )
+          else
+            client.search(
+              query: options[:query],
+              from_time: @parsed_from,
+              to_time: @parsed_to,
+              time_zone: @parsed_timezone,
+              limit: options[:limit]
+            )
+          end
         end
 
         def display_results_summary(results)
+          result_type = options[:aggregate] ? 'records' : 'messages'
           warn '=' * 60
-          warn "Results: #{results.size} messages"
+          warn "Results: #{results.size} #{result_type}"
           warn '=' * 60
           $stderr.puts
         end
 
         def output_search_results(results)
-          output_json(
-            query: options[:query],
-            from: @parsed_from,
-            to: @parsed_to,
-            from_original: @original_from,
-            to_original: @original_to,
-            time_zone: @parsed_timezone,
-            message_count: results.size,
-            messages: results
-          )
+          if options[:aggregate]
+            output_json(
+              query: options[:query],
+              from: @parsed_from,
+              to: @parsed_to,
+              from_original: @original_from,
+              to_original: @original_to,
+              time_zone: @parsed_timezone,
+              record_count: results.size,
+              records: results
+            )
+          else
+            output_json(
+              query: options[:query],
+              from: @parsed_from,
+              to: @parsed_to,
+              from_original: @original_from,
+              to_original: @original_to,
+              time_zone: @parsed_timezone,
+              message_count: results.size,
+              messages: results
+            )
+          end
         end
 
         def launch_interactive_mode(results)
+          if options[:aggregate]
+            warn 'Interactive mode is not supported for aggregation queries'
+            output_search_results(results)
+            return
+          end
+
           require_relative '../../interactive'
 
           formatted_results = build_formatted_results(results)

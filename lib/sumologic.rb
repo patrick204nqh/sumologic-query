@@ -11,6 +11,20 @@ module Sumologic
 
   # Timeout errors during search job execution
   class TimeoutError < Error; end
+
+  # Rate limit errors (429 responses)
+  # Includes retry_after when available from X-RateLimit-Reset or Retry-After headers
+  class RateLimitError < Error
+    attr_reader :retry_after, :limit, :remaining, :reset_at
+
+    def initialize(message, retry_after: nil, limit: nil, remaining: nil, reset_at: nil)
+      super(message)
+      @retry_after = retry_after
+      @limit = limit
+      @remaining = remaining
+      @reset_at = reset_at
+    end
+  end
 end
 
 # Load configuration first

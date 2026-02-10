@@ -204,17 +204,20 @@ module Sumologic
       end
     end
 
-    # Value object representing a Sumo Logic Dashboard
+    # Value object representing a Sumo Logic Dashboard (v2 API)
     class DashboardModel
-      attr_reader :id, :title, :description, :folder_id, :created_at, :modified_at
+      attr_reader :id, :title, :description, :folder_id, :domain,
+                  :refresh_interval, :theme, :content_id
 
       def initialize(data)
         @id = data['id']
         @title = data['title']
         @description = data['description']
         @folder_id = data['folderId']
-        @created_at = data['createdAt']
-        @modified_at = data['modifiedAt']
+        @domain = data['domain']
+        @refresh_interval = data['refreshInterval']
+        @theme = data['theme']
+        @content_id = data['contentId']
         @raw_data = data
       end
 
@@ -225,8 +228,10 @@ module Sumologic
           'title' => @title,
           'description' => @description,
           'folderId' => @folder_id,
-          'createdAt' => @created_at,
-          'modifiedAt' => @modified_at
+          'domain' => @domain,
+          'refreshInterval' => @refresh_interval,
+          'theme' => @theme,
+          'contentId' => @content_id
         }.compact
       end
 

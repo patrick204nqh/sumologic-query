@@ -5,8 +5,8 @@ require_relative 'models'
 
 module Sumologic
   module Metadata
-    # Handles dashboard operations
-    # Dashboards are the new dashboard format (v2) in Sumo Logic
+    # Handles dashboard operations via v2 API
+    # Uses GET /v2/dashboards endpoints
     class Dashboard
       include Loggable
 

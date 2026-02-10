@@ -45,3 +45,5 @@ Thumbs.db
 
 # Homebrew formula (lives in homebrew-tap repo)
 Formula/
+
+.plans

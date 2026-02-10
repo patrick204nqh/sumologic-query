@@ -15,6 +15,7 @@ require_relative 'cli/commands/list_health_events_command'
 require_relative 'cli/commands/list_fields_command'
 require_relative 'cli/commands/get_lookup_command'
 require_relative 'cli/commands/list_apps_command'
+require_relative 'cli/commands/get_content_command'
 
 module Sumologic
   # Thor-based CLI for Sumo Logic query tool
@@ -362,6 +363,29 @@ module Sumologic
     def list_apps
       Commands::ListAppsCommand.new(options, create_client).execute
     end
+
+    # ============================================================
+    # Content Library Commands (path-based)
+    # ============================================================
+
+    desc 'get-content', 'Get a content item by its library path'
+    long_desc <<~DESC
+      Look up a content item in the Sumo Logic content library by its path.
+      Returns the item ID, type, name, and parent folder.
+
+      Examples:
+        # Get content by path
+        sumo-query get-content --path '/Library/Users/me/My Saved Search'
+
+        # Save to file
+        sumo-query get-content --path '/Library/Users/me/Dashboard' --output content.json
+    DESC
+    option :path, type: :string, required: true, aliases: '-p', desc: 'Content library path'
+    # rubocop:disable Naming/AccessorMethodName -- Thor CLI command, not a getter
+    def get_content
+      Commands::GetContentCommand.new(options, create_client).execute
+    end
+    # rubocop:enable Naming/AccessorMethodName
 
     # ============================================================
     # Utility Commands

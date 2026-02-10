@@ -53,6 +53,8 @@ require_relative 'sumologic/metadata/dynamic_source_discovery'
 require_relative 'sumologic/metadata/monitor'
 require_relative 'sumologic/metadata/folder'
 require_relative 'sumologic/metadata/dashboard'
+require_relative 'sumologic/metadata/health_event'
+require_relative 'sumologic/metadata/field'
 
 # Load main client (facade)
 require_relative 'sumologic/client'

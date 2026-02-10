@@ -11,6 +11,8 @@ require_relative 'cli/commands/get_monitor_command'
 require_relative 'cli/commands/list_folders_command'
 require_relative 'cli/commands/list_dashboards_command'
 require_relative 'cli/commands/get_dashboard_command'
+require_relative 'cli/commands/list_health_events_command'
+require_relative 'cli/commands/list_fields_command'
 
 module Sumologic
   # Thor-based CLI for Sumo Logic query tool
@@ -274,6 +276,51 @@ module Sumologic
       Commands::GetDashboardCommand.new(options, create_client).execute
     end
     # rubocop:enable Naming/AccessorMethodName
+
+    # ============================================================
+    # Health Events Commands
+    # ============================================================
+
+    desc 'list-health-events', 'List health events for collectors, sources, and ingest budgets'
+    long_desc <<~DESC
+      List health events from your Sumo Logic account.
+      Shows collector, source, and ingest budget health status.
+
+      Examples:
+        # List health events
+        sumo-query list-health-events
+
+        # Save to file
+        sumo-query list-health-events --output health.json
+    DESC
+    option :limit, type: :numeric, aliases: '-l', default: 100, desc: 'Maximum events to return'
+    def list_health_events
+      Commands::ListHealthEventsCommand.new(options, create_client).execute
+    end
+
+    # ============================================================
+    # Fields Commands
+    # ============================================================
+
+    desc 'list-fields', 'List custom or built-in log fields'
+    long_desc <<~DESC
+      List fields available in your Sumo Logic account.
+      By default, lists custom fields. Use --builtin for built-in fields.
+
+      Examples:
+        # List custom fields
+        sumo-query list-fields
+
+        # List built-in fields
+        sumo-query list-fields --builtin
+
+        # Save to file
+        sumo-query list-fields --output fields.json
+    DESC
+    option :builtin, type: :boolean, desc: 'List built-in fields instead of custom fields'
+    def list_fields
+      Commands::ListFieldsCommand.new(options, create_client).execute
+    end
 
     # ============================================================
     # Utility Commands

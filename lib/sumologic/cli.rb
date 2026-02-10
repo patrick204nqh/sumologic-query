@@ -13,6 +13,8 @@ require_relative 'cli/commands/list_dashboards_command'
 require_relative 'cli/commands/get_dashboard_command'
 require_relative 'cli/commands/list_health_events_command'
 require_relative 'cli/commands/list_fields_command'
+require_relative 'cli/commands/get_lookup_command'
+require_relative 'cli/commands/list_apps_command'
 
 module Sumologic
   # Thor-based CLI for Sumo Logic query tool
@@ -320,6 +322,45 @@ module Sumologic
     option :builtin, type: :boolean, desc: 'List built-in fields instead of custom fields'
     def list_fields
       Commands::ListFieldsCommand.new(options, create_client).execute
+    end
+
+    # ============================================================
+    # Lookup Tables Commands
+    # ============================================================
+
+    desc 'get-lookup', 'Get a specific lookup table by ID'
+    long_desc <<~DESC
+      Get detailed information about a specific lookup table.
+      Note: There is no list-all endpoint for lookup tables in the Sumo Logic API.
+
+      Example:
+        sumo-query get-lookup --lookup-id 0000000000123456
+    DESC
+    option :lookup_id, type: :string, required: true, desc: 'Lookup table ID'
+    # rubocop:disable Naming/AccessorMethodName -- Thor CLI command, not a getter
+    def get_lookup
+      Commands::GetLookupCommand.new(options, create_client).execute
+    end
+    # rubocop:enable Naming/AccessorMethodName
+
+    # ============================================================
+    # Apps Commands (Catalog)
+    # ============================================================
+
+    desc 'list-apps', 'List available apps from the Sumo Logic catalog'
+    long_desc <<~DESC
+      List apps available in the Sumo Logic app catalog.
+      Note: This lists the catalog of available apps, not installed apps.
+
+      Examples:
+        # List all available apps
+        sumo-query list-apps
+
+        # Save to file
+        sumo-query list-apps --output apps.json
+    DESC
+    def list_apps
+      Commands::ListAppsCommand.new(options, create_client).execute
     end
 
     # ============================================================

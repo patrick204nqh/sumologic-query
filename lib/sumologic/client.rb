@@ -42,6 +42,8 @@ module Sumologic
       @dashboard = Metadata::Dashboard.new(http_client: @http_v2)
       @health_event = Metadata::HealthEvent.new(http_client: @http)
       @field = Metadata::Field.new(http_client: @http)
+      @lookup_table = Metadata::LookupTable.new(http_client: @http)
+      @app = Metadata::App.new(http_client: @http)
     end
 
     # Search logs with query
@@ -221,6 +223,27 @@ module Sumologic
     # List built-in fields
     def list_builtin_fields
       @field.list_builtin
+    end
+
+    # ============================================================
+    # Lookup Tables API
+    # ============================================================
+
+    # Get a specific lookup table by ID
+    # Note: There is no list-all endpoint for lookup tables
+    #
+    # @param lookup_id [String] The lookup table ID
+    def get_lookup(lookup_id:)
+      @lookup_table.get(lookup_id)
+    end
+
+    # ============================================================
+    # Apps API (Catalog)
+    # ============================================================
+
+    # List available apps from the Sumo Logic app catalog
+    def list_apps
+      @app.list
     end
   end
 end

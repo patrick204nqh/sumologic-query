@@ -55,6 +55,8 @@ require_relative 'sumologic/metadata/folder'
 require_relative 'sumologic/metadata/dashboard'
 require_relative 'sumologic/metadata/health_event'
 require_relative 'sumologic/metadata/field'
+require_relative 'sumologic/metadata/lookup_table'
+require_relative 'sumologic/metadata/app'
 
 # Load main client (facade)
 require_relative 'sumologic/client'

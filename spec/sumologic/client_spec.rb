@@ -160,5 +160,15 @@ RSpec.describe Sumologic::Client do
     it 'responds to list_builtin_fields' do
       expect(client).to respond_to(:list_builtin_fields)
     end
+
+    # Lookup Tables API
+    it 'responds to get_lookup' do
+      expect(client).to respond_to(:get_lookup)
+    end
+
+    # Apps API
+    it 'responds to list_apps' do
+      expect(client).to respond_to(:list_apps)
+    end
   end
 end

@@ -154,5 +154,10 @@ RSpec.describe Sumologic::Client do
     it 'responds to search_dashboards' do
       expect(client).to respond_to(:search_dashboards)
     end
+
+    # Content Library API
+    it 'responds to get_content' do
+      expect(client).to respond_to(:get_content)
+    end
   end
 end

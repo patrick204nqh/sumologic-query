@@ -40,6 +40,7 @@ module Sumologic
       @monitor = Metadata::Monitor.new(http_client: @http)
       @folder = Metadata::Folder.new(http_client: @http_v2) # Uses v2 API
       @dashboard = Metadata::Dashboard.new(http_client: @http)
+      @content = Metadata::Content.new(http_client: @http_v2) # Uses v2 API
     end
 
     # Search logs with query
@@ -206,6 +207,17 @@ module Sumologic
     # @param limit [Integer] Maximum results
     def search_dashboards(query:, limit: 100)
       @dashboard.search(query: query, limit: limit)
+    end
+
+    # ============================================================
+    # Content Library API (path-based)
+    # ============================================================
+
+    # Get a content item by its library path
+    #
+    # @param path [String] Content library path (e.g., '/Library/Users/me/My Search')
+    def get_content(path:)
+      @content.get_by_path(path)
     end
   end
 end

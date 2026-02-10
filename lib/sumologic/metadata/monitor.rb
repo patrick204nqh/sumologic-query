@@ -110,20 +110,26 @@ module Sumologic
         children.each do |child|
           break if collected.size >= limit
 
-          if child['contentType'] == 'Monitor'
-            collected << child
-          elsif child['contentType'] == 'Folder'
-            # Recursively process subfolders
-            begin
-              subfolder = @http.request(method: :get, path: "/monitors/#{child['id']}")
-              collect_monitors(subfolder, limit, collected)
-            rescue StandardError => e
-              log_error "Failed to fetch subfolder #{child['id']}: #{e.message}"
-            end
-          end
+          process_child(child, limit, collected)
         end
 
         collected
+      end
+
+      def process_child(child, limit, collected)
+        case child['contentType']
+        when 'Monitor'
+          collected << child
+        when 'Folder'
+          process_subfolder(child, limit, collected)
+        end
+      end
+
+      def process_subfolder(child, limit, collected)
+        subfolder = @http.request(method: :get, path: "/monitors/#{child['id']}")
+        collect_monitors(subfolder, limit, collected)
+      rescue StandardError => e
+        log_error "Failed to fetch subfolder #{child['id']}: #{e.message}"
       end
     end
   end

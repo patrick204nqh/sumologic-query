@@ -25,8 +25,10 @@ module Sumologic
             title: dashboard['title'],
             description: dashboard['description'],
             folderId: dashboard['folderId'],
-            createdAt: dashboard['createdAt'],
-            modifiedAt: dashboard['modifiedAt']
+            domain: dashboard['domain'],
+            refreshInterval: dashboard['refreshInterval'],
+            theme: dashboard['theme'],
+            contentId: dashboard['contentId']
           }.compact
         end
       end

@@ -181,9 +181,11 @@ module Sumologic
         sumo-query get-monitor --monitor-id 0000000000123456
     DESC
     option :monitor_id, type: :string, required: true, desc: 'Monitor ID'
+    # rubocop:disable Naming/AccessorMethodName -- Thor CLI command, not a getter
     def get_monitor
       Commands::GetMonitorCommand.new(options, create_client).execute
     end
+    # rubocop:enable Naming/AccessorMethodName
 
     # ============================================================
     # Folders Commands (Content Library)
@@ -245,9 +247,11 @@ module Sumologic
         sumo-query get-dashboard --dashboard-id 0000000000123456
     DESC
     option :dashboard_id, type: :string, required: true, desc: 'Dashboard ID'
+    # rubocop:disable Naming/AccessorMethodName -- Thor CLI command, not a getter
     def get_dashboard
       Commands::GetDashboardCommand.new(options, create_client).execute
     end
+    # rubocop:enable Naming/AccessorMethodName
 
     # ============================================================
     # Utility Commands

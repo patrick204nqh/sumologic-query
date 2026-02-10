@@ -39,7 +39,7 @@ module Sumologic
       )
       @monitor = Metadata::Monitor.new(http_client: @http)
       @folder = Metadata::Folder.new(http_client: @http_v2) # Uses v2 API
-      @dashboard = Metadata::Dashboard.new(http_client: @http)
+      @dashboard = Metadata::Dashboard.new(http_client: @http_v2)
     end
 
     # Search logs with query

@@ -16,6 +16,7 @@ require_relative 'cli/commands/list_fields_command'
 require_relative 'cli/commands/get_lookup_command'
 require_relative 'cli/commands/list_apps_command'
 require_relative 'cli/commands/get_content_command'
+require_relative 'cli/commands/export_content_command'
 
 module Sumologic
   # Thor-based CLI for Sumo Logic query tool
@@ -386,6 +387,23 @@ module Sumologic
       Commands::GetContentCommand.new(options, create_client).execute
     end
     # rubocop:enable Naming/AccessorMethodName
+
+    desc 'export-content', 'Export a content item as JSON'
+    long_desc <<~DESC
+      Export a content library item (search, dashboard, folder) as JSON.
+      Handles the async export job automatically (start, poll, fetch result).
+
+      Examples:
+        # Export by content ID
+        sumo-query export-content --content-id 0000000000123456
+
+        # Save export to file
+        sumo-query export-content --content-id 0000000000123456 --output export.json
+    DESC
+    option :content_id, type: :string, required: true, desc: 'Content item ID to export'
+    def export_content
+      Commands::ExportContentCommand.new(options, create_client).execute
+    end
 
     # ============================================================
     # Utility Commands

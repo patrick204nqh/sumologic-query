@@ -159,5 +159,9 @@ RSpec.describe Sumologic::Client do
     it 'responds to get_content' do
       expect(client).to respond_to(:get_content)
     end
+
+    it 'responds to export_content' do
+      expect(client).to respond_to(:export_content)
+    end
   end
 end

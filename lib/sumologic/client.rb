@@ -219,5 +219,13 @@ module Sumologic
     def get_content(path:)
       @content.get_by_path(path)
     end
+
+    # Export a content item as JSON
+    # Handles async job lifecycle: start → poll → fetch result
+    #
+    # @param content_id [String] The content item ID to export
+    def export_content(content_id:)
+      @content.export(content_id)
+    end
   end
 end

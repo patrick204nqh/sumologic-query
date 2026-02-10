@@ -78,7 +78,7 @@ sumo-query search -q "YOUR_QUERY" -f "START" -t "END" [OPTIONS]
 sumo-query discover-sources [OPTIONS]
 ```
 
-Finds dynamic source names from log data (CloudWatch, ECS, Lambda streams).
+Discovers source names from log data using search aggregation (`* | count by _sourceName, _sourceCategory`). This is not an official Sumo Logic API — it complements `list-sources` by finding runtime sources (CloudWatch, ECS, Lambda streams) that use dynamic `_sourceName` values.
 
 **Options:**
 - `-f, --from` - Start time (default: `-24h`)

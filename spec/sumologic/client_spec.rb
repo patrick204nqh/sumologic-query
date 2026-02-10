@@ -117,14 +117,6 @@ RSpec.describe Sumologic::Client do
       expect(client).to respond_to(:get_monitor)
     end
 
-    it 'responds to monitors_root' do
-      expect(client).to respond_to(:monitors_root)
-    end
-
-    it 'responds to search_monitors' do
-      expect(client).to respond_to(:search_monitors)
-    end
-
     # Folders API
     it 'responds to personal_folder' do
       expect(client).to respond_to(:personal_folder)

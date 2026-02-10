@@ -112,10 +112,17 @@ module Sumologic
       Commands::ListSourcesCommand.new(options, create_client).execute
     end
 
-    desc 'discover-sources', 'Discover dynamic source names from logs'
+    desc 'discover-sources', 'Discover source names from log data using search aggregation'
     long_desc <<~DESC
-      Discover dynamic source names by querying actual log data.
-      Useful for CloudWatch/ECS sources that use dynamic _sourceName values.
+      Discovers source names from actual log data using search aggregation.
+      Useful for CloudWatch/ECS/Lambda sources with dynamic _sourceName values
+      that are not visible in the Collectors API.
+
+      Note: This is not an official Sumo Logic API. It runs the search query:
+        * | count by _sourceName, _sourceCategory | sort by _count desc
+      This is a well-known technique in the Sumo Logic community to discover
+      runtime sources, complementing the static source configuration from
+      the Collectors API (list-sources).
 
       Time Formats:
         --from and --to support multiple formats:
@@ -155,22 +162,37 @@ module Sumologic
     # Monitors Commands
     # ============================================================
 
-    desc 'list-monitors', 'List all monitors (alerts)'
+    desc 'list-monitors', 'List monitors with optional status and query filters'
     long_desc <<~DESC
-      List all monitors in your Sumo Logic account.
-      Monitors are alerting rules that trigger based on log queries.
+      List monitors in your Sumo Logic account using the search API.
+      Supports filtering by monitor status and text query.
+
+      Status Values:
+        Normal, Critical, Warning, MissingData, Disabled, AllTriggered
 
       Examples:
         # List all monitors
         sumo-query list-monitors
 
-        # List monitors with limit
-        sumo-query list-monitors --limit 50
+        # List only critical monitors
+        sumo-query list-monitors --status Critical
+
+        # List all currently triggered monitors
+        sumo-query list-monitors --status AllTriggered
+
+        # Search monitors by name
+        sumo-query list-monitors --query "prod"
+
+        # Combine status and query filters
+        sumo-query list-monitors --status Warning --query "latency"
 
         # Save to file
         sumo-query list-monitors --output monitors.json
     DESC
     option :limit, type: :numeric, aliases: '-l', default: 100, desc: 'Maximum monitors to return'
+    option :status, type: :string, aliases: '-s',
+                    desc: 'Filter by status (Normal, Critical, Warning, MissingData, Disabled, AllTriggered)'
+    option :query, type: :string, aliases: '-q', desc: 'Search query to filter monitors'
     def list_monitors
       Commands::ListMonitorsCommand.new(options, create_client).execute
     end

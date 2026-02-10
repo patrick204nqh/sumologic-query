@@ -114,15 +114,17 @@ module Sumologic
     end
 
     # ============================================================
-    # Monitors API
+    # Monitors API (uses search endpoint)
     # ============================================================
 
-    # List all monitors
-    # Returns array of monitor objects
+    # List monitors with optional status and query filters
+    # Uses GET /v1/monitors/search for flat, paginated results
     #
+    # @param query [String, nil] Search query to filter by name/description
+    # @param status [String, nil] Filter by status (Normal, Critical, Warning, MissingData, Disabled, AllTriggered)
     # @param limit [Integer] Maximum monitors to return (default: 100)
-    def list_monitors(limit: 100)
-      @monitor.list(limit: limit)
+    def list_monitors(query: nil, status: nil, limit: 100)
+      @monitor.list(query: query, status: status, limit: limit)
     end
 
     # Get a specific monitor by ID
@@ -131,20 +133,6 @@ module Sumologic
     # @param monitor_id [String] The monitor ID
     def get_monitor(monitor_id:)
       @monitor.get(monitor_id)
-    end
-
-    # Get the root monitors folder
-    # Returns folder with monitors hierarchy
-    def monitors_root
-      @monitor.root
-    end
-
-    # Search monitors by name or description
-    #
-    # @param query [String] Search query
-    # @param limit [Integer] Maximum results
-    def search_monitors(query:, limit: 100)
-      @monitor.search(query: query, limit: limit)
     end
 
     # ============================================================

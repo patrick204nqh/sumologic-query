@@ -110,10 +110,17 @@ module Sumologic
       Commands::ListSourcesCommand.new(options, create_client).execute
     end
 
-    desc 'discover-sources', 'Discover dynamic source names from logs'
+    desc 'discover-sources', 'Discover source names from log data using search aggregation'
     long_desc <<~DESC
-      Discover dynamic source names by querying actual log data.
-      Useful for CloudWatch/ECS sources that use dynamic _sourceName values.
+      Discovers source names from actual log data using search aggregation.
+      Useful for CloudWatch/ECS/Lambda sources with dynamic _sourceName values
+      that are not visible in the Collectors API.
+
+      Note: This is not an official Sumo Logic API. It runs the search query:
+        * | count by _sourceName, _sourceCategory | sort by _count desc
+      This is a well-known technique in the Sumo Logic community to discover
+      runtime sources, complementing the static source configuration from
+      the Collectors API (list-sources).
 
       Time Formats:
         --from and --to support multiple formats:

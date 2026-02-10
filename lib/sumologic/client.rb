@@ -40,6 +40,8 @@ module Sumologic
       @monitor = Metadata::Monitor.new(http_client: @http)
       @folder = Metadata::Folder.new(http_client: @http_v2) # Uses v2 API
       @dashboard = Metadata::Dashboard.new(http_client: @http)
+      @health_event = Metadata::HealthEvent.new(http_client: @http)
+      @field = Metadata::Field.new(http_client: @http)
     end
 
     # Search logs with query
@@ -206,6 +208,31 @@ module Sumologic
     # @param limit [Integer] Maximum results
     def search_dashboards(query:, limit: 100)
       @dashboard.search(query: query, limit: limit)
+    end
+
+    # ============================================================
+    # Health Events API
+    # ============================================================
+
+    # List health events for collectors, sources, and ingest budgets
+    #
+    # @param limit [Integer] Maximum events to return (default: 100)
+    def list_health_events(limit: 100)
+      @health_event.list(limit: limit)
+    end
+
+    # ============================================================
+    # Fields API
+    # ============================================================
+
+    # List custom fields
+    def list_fields
+      @field.list
+    end
+
+    # List built-in fields
+    def list_builtin_fields
+      @field.list_builtin
     end
   end
 end

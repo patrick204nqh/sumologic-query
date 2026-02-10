@@ -154,5 +154,19 @@ RSpec.describe Sumologic::Client do
     it 'responds to search_dashboards' do
       expect(client).to respond_to(:search_dashboards)
     end
+
+    # Health Events API
+    it 'responds to list_health_events' do
+      expect(client).to respond_to(:list_health_events)
+    end
+
+    # Fields API
+    it 'responds to list_fields' do
+      expect(client).to respond_to(:list_fields)
+    end
+
+    it 'responds to list_builtin_fields' do
+      expect(client).to respond_to(:list_builtin_fields)
+    end
   end
 end

@@ -44,6 +44,7 @@ module Sumologic
       @field = Metadata::Field.new(http_client: @http)
       @lookup_table = Metadata::LookupTable.new(http_client: @http)
       @app = Metadata::App.new(http_client: @http)
+      @content = Metadata::Content.new(http_client: @http_v2) # Uses v2 API
     end
 
     # Search logs with query
@@ -244,6 +245,17 @@ module Sumologic
     # List available apps from the Sumo Logic app catalog
     def list_apps
       @app.list
+    end
+
+    # ============================================================
+    # Content Library API (path-based)
+    # ============================================================
+
+    # Get a content item by its library path
+    #
+    # @param path [String] Content library path (e.g., '/Library/Users/me/My Search')
+    def get_content(path:)
+      @content.get_by_path(path)
     end
   end
 end

@@ -48,7 +48,49 @@ Scope:         <source/service>
 Time window:   <from> to <to>
 ```
 
-### Phase 2: Check Monitors & Health
+### Phase 2: Discover Log Sources
+
+Before running queries, identify the correct source categories for the service.
+This avoids wasting search queries on trial-and-error source discovery.
+
+**If the source category is already known** (user provided it, or it's obvious), skip this phase.
+
+**If the source is unknown**, run a discovery query:
+
+```bash
+sumo-query search \
+  -q '<service keyword> | count by _sourceCategory, _sourceName | sort by _count desc' \
+  -f '-1h' -t 'now' -a -l 30
+```
+
+Or use the discovery command with keyword filtering:
+
+```bash
+sumo-query discover-source-metadata -k "<service keyword>" -l 20
+```
+
+Or filter collectors/sources directly:
+
+```bash
+sumo-query list-collectors -q "<service keyword>"
+sumo-query list-sources --collector "<service keyword>"
+```
+
+**Evaluate the results:**
+- Prefer sources with high message counts (active)
+- Ignore sources with zero or very low counts (stale)
+- Note the exact `_sourceCategory` values for use in subsequent queries
+
+Tell the user what sources were found:
+
+```
+Found sources:
+- _sourceCategory=production/my-app (1.2M msgs) — Active
+- _sourceCategory=production/my-app-legacy (0 msgs) — Stale, skipping
+Using: _sourceCategory=production/my-app
+```
+
+### Phase 3: Check Monitors & Health
 
 Run these in parallel to get the current alert landscape:
 
@@ -72,7 +114,7 @@ sumo-query list-monitors -q "<service keyword>" -l 20
 
 **Analyze**: Are there active alerts related to the reported problem? Note any correlated monitors.
 
-### Phase 3: Initial Log Search
+### Phase 4: Initial Log Search
 
 Based on the problem description, construct a targeted search:
 
@@ -85,14 +127,14 @@ sumo-query search \
 ```
 
 **Guidelines for query construction:**
+- Use the `_sourceCategory` discovered in Phase 2 for precise scoping
 - Start broad, then narrow down
 - Use keywords from the problem description
 - Include status codes, error messages, exception names as appropriate
-- If unsure about the source category, search broadly first
 
 **Analyze the results**: Look for patterns, error messages, stack traces, and timestamps.
 
-### Phase 4: Aggregate & Drill Down
+### Phase 5: Aggregate & Drill Down
 
 Based on Phase 3 findings, run aggregation queries to quantify the problem:
 
@@ -119,7 +161,7 @@ sumo-query search \
 
 Choose the aggregation queries that make sense for the specific problem. You may run multiple queries in parallel.
 
-### Phase 5: Correlate
+### Phase 6: Correlate
 
 Look for correlation across services or time:
 
@@ -133,7 +175,7 @@ sumo-query search \
   -f <from> -t <to> -a -l 100
 ```
 
-### Phase 6: Present Incident Report
+### Phase 7: Present Incident Report
 
 Format findings as a structured incident report:
 

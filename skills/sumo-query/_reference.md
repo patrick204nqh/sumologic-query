@@ -20,6 +20,7 @@ If the command fails, tell the user to install it: `gem install sumologic-query`
 The user asked about: **$ARGUMENTS**
 
 If `$ARGUMENTS` is empty, show a brief table of contents and ask which topic they want:
+
 - `commands` — All CLI commands and flags
 - `query-syntax` — Sumo Logic query language reference
 - `time` — Time format and timezone reference
@@ -48,16 +49,17 @@ sumo-query search -q 'error' -f -1h -t now -z America/New_York
 ```
 
 ### Search Flags
-| Flag | Long | Required | Description |
-|------|------|----------|-------------|
-| `-q` | `--query` | Yes | Sumo Logic query string |
-| `-f` | `--from` | Yes | Start time |
-| `-t` | `--to` | Yes | End time |
-| `-l` | `--limit` | No | Max results to return |
-| `-a` | `--aggregate` | No | Return aggregation records |
-| `-z` | `--time-zone` | No | Timezone (default: UTC) |
-| `-d` | `--debug` | No | Debug output |
-| `-o` | `--output` | No | Write JSON to file |
+
+| Flag | Long          | Required | Description                |
+| ---- | ------------- | -------- | -------------------------- |
+| `-q` | `--query`     | Yes      | Sumo Logic query string    |
+| `-f` | `--from`      | Yes      | Start time                 |
+| `-t` | `--to`        | Yes      | End time                   |
+| `-l` | `--limit`     | No       | Max results to return      |
+| `-a` | `--aggregate` | No       | Return aggregation records |
+| `-z` | `--time-zone` | No       | Timezone (default: UTC)    |
+| `-d` | `--debug`     | No       | Debug output               |
+| `-o` | `--output`    | No       | Write JSON to file         |
 
 ## Monitors
 
@@ -79,11 +81,12 @@ sumo-query get-monitor --monitor-id 00000000001A2B3C
 ```
 
 ### list-monitors Flags
-| Flag | Long | Required | Description |
-|------|------|----------|-------------|
-| `-s` | `--status` | No | Filter: Normal, Critical, Warning, MissingData, Disabled, AllTriggered |
-| `-q` | `--query` | No | Search name/description |
-| `-l` | `--limit` | No | Max results (default: 100) |
+
+| Flag | Long       | Required | Description                                                            |
+| ---- | ---------- | -------- | ---------------------------------------------------------------------- |
+| `-s` | `--status` | No       | Filter: Normal, Critical, Warning, MissingData, Disabled, AllTriggered |
+| `-q` | `--query`  | No       | Search name/description                                                |
+| `-l` | `--limit`  | No       | Max results (default: 100)                                             |
 
 ## Health Events
 
@@ -98,17 +101,55 @@ sumo-query list-health-events -l 50
 # List all collectors
 sumo-query list-collectors
 
+# Filter collectors by name or category
+sumo-query list-collectors -q "my-service" -l 20
+
 # List sources for a specific collector
 sumo-query list-sources --collector-id 123456789
 
 # List all sources across all collectors
 sumo-query list-sources
 
+# Filter sources by collector name, source name, or category
+sumo-query list-sources --collector "my-service" --name "nginx" -l 20
+sumo-query list-sources --category "production"
+
 # Discover dynamic source metadata from logs
 sumo-query discover-source-metadata
 sumo-query discover-source-metadata --filter '_sourceCategory=*ecs*'
 sumo-query discover-source-metadata -f -7d -t now
+
+# Discover with keyword filter (matches name or category)
+sumo-query discover-source-metadata -k "nginx" -l 20
 ```
+
+### list-collectors Flags
+
+| Flag | Long      | Required | Description                                   |
+| ---- | --------- | -------- | --------------------------------------------- |
+| `-q` | `--query` | No       | Filter by name or category (case-insensitive) |
+| `-l` | `--limit` | No       | Max results to return                         |
+
+### list-sources Flags
+
+| Flag | Long             | Required | Description                                  |
+| ---- | ---------------- | -------- | -------------------------------------------- |
+|      | `--collector-id` | No       | Collector ID to list sources for             |
+|      | `--collector`    | No       | Filter by collector name (case-insensitive)  |
+| `-n` | `--name`         | No       | Filter by source name (case-insensitive)     |
+|      | `--category`     | No       | Filter by source category (case-insensitive) |
+| `-l` | `--limit`        | No       | Max total sources to return                  |
+
+### discover-source-metadata Flags
+
+| Flag | Long          | Required | Description                                             |
+| ---- | ------------- | -------- | ------------------------------------------------------- |
+| `-f` | `--from`      | No       | Start time (default: -24h)                              |
+| `-t` | `--to`        | No       | End time (default: now)                                 |
+| `-z` | `--time-zone` | No       | Timezone (default: UTC)                                 |
+|      | `--filter`    | No       | Sumo Logic query filter (e.g., `_sourceCategory=*ecs*`) |
+| `-k` | `--keyword`   | No       | Filter results by keyword (matches name or category)    |
+| `-l` | `--limit`     | No       | Max sources to return                                   |
 
 ## Dashboards & Folders
 
@@ -164,32 +205,39 @@ sumo-query get-lookup --lookup-id 00000000001A2B3C
 # Time Format Reference
 
 ## Relative Times
-| Format | Meaning |
-|--------|---------|
-| `-15m` | 15 minutes ago |
-| `-1h` | 1 hour ago |
-| `-6h` | 6 hours ago |
-| `-1d` | 1 day ago |
-| `-7d` | 7 days ago |
-| `-1w` | 1 week ago |
-| `-1M` | 1 month ago |
-| `now` | Current time |
+
+| Format   | Meaning               |
+| -------- | --------------------- |
+| `-15m`   | 15 minutes ago        |
+| `-1h`    | 1 hour ago            |
+| `-1h30m` | 1 hour 30 minutes ago |
+| `-6h`    | 6 hours ago           |
+| `-1d`    | 1 day ago             |
+| `-2d3h`  | 2 days 3 hours ago    |
+| `-7d`    | 7 days ago            |
+| `-1w`    | 1 week ago            |
+| `-1M`    | 1 month ago           |
+| `now`    | Current time          |
+
+Compound expressions (e.g., `-1h30m`, `-2d3h15m`) are supported.
 
 ## Absolute Times
-| Format | Example |
-|--------|---------|
-| ISO 8601 | `2025-01-15T14:00:00` |
-| Unix timestamp | `1700000000` |
+
+| Format         | Example               |
+| -------------- | --------------------- |
+| ISO 8601       | `2025-01-15T14:00:00` |
+| Unix timestamp | `1700000000`          |
 
 ## Timezones
-| Value | Description |
-|-------|-------------|
-| `UTC` | Default |
-| `EST` | US Eastern |
-| `AEST` | Australian Eastern |
-| `America/New_York` | IANA US Eastern |
+
+| Value              | Description             |
+| ------------------ | ----------------------- |
+| `UTC`              | Default                 |
+| `EST`              | US Eastern              |
+| `AEST`             | Australian Eastern      |
+| `America/New_York` | IANA US Eastern         |
 | `Australia/Sydney` | IANA Australian Eastern |
-| `+05:30` | UTC offset format |
+| `+05:30`           | UTC offset format       |
 
 ---
 
@@ -213,6 +261,7 @@ _collector=my-collector
 ```
 
 Combine with `AND`, `OR`, `NOT`:
+
 ```
 _sourceCategory=prod AND error
 _sourceCategory=prod NOT "health check"
@@ -231,17 +280,20 @@ error NOT "expected error"
 ## Parse Operators
 
 ### parse (anchor-based)
+
 ```
 | parse "status=* method=* path=*" as status, method, path
 ```
 
 ### parse regex
+
 ```
 | parse regex "(?<ip>\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"
 | parse regex "status=(?<status>\d+)"
 ```
 
 ### json
+
 ```
 | json "response.status" as status
 | json "user.name" as username
@@ -249,6 +301,7 @@ error NOT "expected error"
 ```
 
 ### csv / keyvalue / xml
+
 ```
 | csv _raw extract 1 as ip, 2 as method, 3 as url
 | keyvalue infer "=" ","
@@ -258,6 +311,7 @@ error NOT "expected error"
 ## Filter Operators
 
 ### where
+
 ```
 | where status >= 400
 | where status = 200
@@ -269,9 +323,11 @@ error NOT "expected error"
 ```
 
 ### Comparison operators
+
 `=`, `!=`, `>`, `>=`, `<`, `<=`, `in`, `matches`
 
 ### String matching
+
 ```
 | where method matches "GET*"
 | where url matches "*api/v2*"
@@ -281,6 +337,7 @@ error NOT "expected error"
 ## Aggregation Operators
 
 ### count
+
 ```
 | count                          # total count
 | count by _sourceCategory       # count per category
@@ -289,6 +346,7 @@ error NOT "expected error"
 ```
 
 ### Statistical
+
 ```
 | avg(response_time) by endpoint
 | sum(bytes) by _sourceHost
@@ -298,6 +356,7 @@ error NOT "expected error"
 ```
 
 ### first / last
+
 ```
 | first(_raw) by _sourceHost
 | last(message) by user
@@ -315,6 +374,7 @@ error NOT "expected error"
 ## Time Operations
 
 ### timeslice
+
 ```
 | timeslice 1m                    # group by 1-minute buckets
 | timeslice 5m                    # 5-minute buckets
@@ -323,6 +383,7 @@ error NOT "expected error"
 ```
 
 ### formatDate
+
 ```
 | formatDate(_messageTime, "yyyy-MM-dd HH:mm:ss") as timestamp
 ```

@@ -37,6 +37,12 @@ Supported scopes:
 sumo-query list-collectors
 ```
 
+If the user mentions a specific service, filter by name:
+
+```bash
+sumo-query list-collectors -q "<service keyword>" -l 20
+```
+
 For each collector found, list its sources:
 
 ```bash
@@ -53,8 +59,22 @@ List all sources and discover dynamic metadata:
 sumo-query list-sources
 ```
 
+To narrow scope, filter by collector name, source name, or category:
+
+```bash
+sumo-query list-sources --collector "<keyword>" --name "<keyword>" -l 30
+```
+
+Discover dynamic sources from log data:
+
 ```bash
 sumo-query discover-source-metadata -f -7d -t now
+```
+
+Filter discovery results by keyword:
+
+```bash
+sumo-query discover-source-metadata -k "<keyword>" -l 20
 ```
 
 ### Scope: dashboards
@@ -103,8 +123,8 @@ sumo-query list-folders --tree --depth 2
 
 **Then:**
 ```bash
-sumo-query list-sources
-sumo-query discover-source-metadata -f -7d -t now
+sumo-query list-sources -l 100
+sumo-query discover-source-metadata -f -7d -t now -l 50
 ```
 
 For the first 10 collectors, also fetch their sources individually.

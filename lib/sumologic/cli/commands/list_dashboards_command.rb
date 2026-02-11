@@ -8,13 +8,9 @@ module Sumologic
       # Handles the list-dashboards command execution
       class ListDashboardsCommand < BaseCommand
         def execute
-          warn 'Fetching dashboards...'
-          dashboards = client.list_dashboards(limit: options[:limit] || 100)
-
-          output_json(
-            total: dashboards.size,
-            dashboards: dashboards
-          )
+          list_resource(label: 'dashboards', key: :dashboards) do
+            client.list_dashboards(limit: options[:limit] || 100)
+          end
         end
       end
     end

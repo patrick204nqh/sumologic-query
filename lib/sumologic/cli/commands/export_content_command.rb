@@ -8,11 +8,9 @@ module Sumologic
       # Handles the export-content command execution
       class ExportContentCommand < BaseCommand
         def execute
-          content_id = options[:content_id]
-          warn "Exporting content #{content_id}..."
-          result = client.export_content(content_id: content_id)
-
-          output_json(result)
+          get_resource(label: 'content', id: options[:content_id]) do
+            client.export_content(content_id: options[:content_id])
+          end
         end
       end
     end

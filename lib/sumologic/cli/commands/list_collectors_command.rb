@@ -8,13 +8,7 @@ module Sumologic
       # Handles the list-collectors command execution
       class ListCollectorsCommand < BaseCommand
         def execute
-          warn 'Fetching collectors...'
-          collectors = client.list_collectors
-
-          output_json(
-            total: collectors.size,
-            collectors: collectors
-          )
+          list_resource(label: 'collectors', key: :collectors) { client.list_collectors }
         end
       end
     end

@@ -8,11 +8,9 @@ module Sumologic
       # Handles the get-dashboard command execution
       class GetDashboardCommand < BaseCommand
         def execute
-          dashboard_id = options[:dashboard_id]
-          warn "Fetching dashboard #{dashboard_id}..."
-          dashboard = client.get_dashboard(dashboard_id: dashboard_id)
-
-          output_json(dashboard)
+          get_resource(label: 'dashboard', id: options[:dashboard_id]) do
+            client.get_dashboard(dashboard_id: options[:dashboard_id])
+          end
         end
       end
     end

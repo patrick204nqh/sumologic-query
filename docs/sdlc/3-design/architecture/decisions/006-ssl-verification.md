@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed
+Accepted
 
 ## Context
 
@@ -167,22 +167,17 @@ end
 
 ## Decision
 
-**[TO BE DECIDED]**
+**Option 1: Use System Default Certificate Store.**
+
+This aligns with the project's "minimal dependencies" principle (ADR 002). The implementation in `ConnectionPool#ssl_cert_store` uses `OpenSSL::X509::Store#set_default_paths`, which works correctly on macOS and Linux with standard Ruby installations.
+
+Users who encounter certificate issues should fix their system OpenSSL configuration rather than the gem working around it.
 
 ## Consequences
 
-**[TO BE DOCUMENTED AFTER DECISION]**
-
-## Next Steps
-
-1. Investigate the specific SSL error on the user's system
-2. Determine if it's a system configuration issue or code issue
-3. Test proposed solutions on multiple platforms
-4. Make decision based on:
-   - Security best practices
-   - Ease of use
-   - Maintenance burden
-   - Platform compatibility
+- SSL verification is always enabled (`VERIFY_PEER`) — no option to disable
+- No additional gem dependencies for certificate management
+- Users with non-standard OpenSSL installations may need to set `SSL_CERT_FILE` environment variable
 
 ## References
 

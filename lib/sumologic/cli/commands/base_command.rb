@@ -17,6 +17,18 @@ module Sumologic
 
         private
 
+        def list_resource(label:, key:)
+          warn "Fetching #{label}..."
+          items = yield
+          output_json(total: items.size, key => items)
+        end
+
+        def get_resource(label:, id:)
+          warn "Fetching #{label} #{id}..."
+          result = yield
+          output_json(result)
+        end
+
         def output_json(data)
           json_output = JSON.pretty_generate(data)
 

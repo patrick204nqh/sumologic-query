@@ -8,11 +8,9 @@ module Sumologic
       # Handles the get-monitor command execution
       class GetMonitorCommand < BaseCommand
         def execute
-          monitor_id = options[:monitor_id]
-          warn "Fetching monitor #{monitor_id}..."
-          monitor = client.get_monitor(monitor_id: monitor_id)
-
-          output_json(monitor)
+          get_resource(label: 'monitor', id: options[:monitor_id]) do
+            client.get_monitor(monitor_id: options[:monitor_id])
+          end
         end
       end
     end

@@ -8,13 +8,7 @@ module Sumologic
       # Handles the list-apps command execution
       class ListAppsCommand < BaseCommand
         def execute
-          warn 'Fetching app catalog...'
-          apps = client.list_apps
-
-          output_json(
-            total: apps.size,
-            apps: apps
-          )
+          list_resource(label: 'app catalog', key: :apps) { client.list_apps }
         end
       end
     end

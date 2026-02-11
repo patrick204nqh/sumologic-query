@@ -152,9 +152,9 @@ client.list_all_sources
 ## Documentation
 
 - [Query Examples](examples/queries.md) - Query patterns and examples
-- [Quick Reference](docs/tldr.md) - Command cheat sheet
-- [Rate Limiting](docs/rate-limiting.md) - Performance tuning
-- [Architecture](docs/architecture/) - Design decisions
+- [Quick Reference](docs/sdlc/7-maintain/tldr.md) - Command cheat sheet
+- [Rate Limiting](docs/sdlc/4-develop/rate-limiting.md) - Performance tuning
+- [Architecture](docs/sdlc/3-design/overview.md) - Design decisions
 
 ## Contributing
 

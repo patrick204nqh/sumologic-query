@@ -40,6 +40,7 @@ module Sumologic
           end
           warn "Time Zone: #{@parsed_timezone}"
           warn "Filter: #{options[:filter] || 'none (all sources)'}"
+          warn "Keyword: #{options[:keyword]}" if options[:keyword]
           warn '-' * 60
           warn 'Running aggregation query to discover sources...'
           $stderr.puts
@@ -50,7 +51,9 @@ module Sumologic
             from_time: @parsed_from,
             to_time: @parsed_to,
             time_zone: @parsed_timezone,
-            filter: options[:filter]
+            filter: options[:filter],
+            keyword: options[:keyword],
+            limit: options[:limit]
           )
         end
       end

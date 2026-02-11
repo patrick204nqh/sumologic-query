@@ -149,8 +149,9 @@ module Sumologic
         # Filter by source category (ECS only)
         sumo-query discover-source-metadata --filter '_sourceCategory=*ecs*'
 
-        # Discover CloudWatch sources
-        sumo-query discover-source-metadata --filter '_sourceCategory=*cloudwatch*'
+        # Filter results by keyword (matches name or category)
+        sumo-query discover-source-metadata --keyword nginx
+        sumo-query discover-source-metadata --keyword nginx -l 10
 
         # Save to file
         sumo-query discover-source-metadata --output discovered-sources.json
@@ -162,6 +163,8 @@ module Sumologic
     option :time_zone, type: :string, default: 'UTC', aliases: '-z',
                        desc: 'Time zone (UTC, EST, AEST, +00:00, America/New_York, Australia/Sydney)'
     option :filter, type: :string, desc: 'Optional filter query (e.g., _sourceCategory=*ecs*)'
+    option :keyword, type: :string, aliases: '-k', desc: 'Filter results by keyword (matches name or category)'
+    option :limit, type: :numeric, aliases: '-l', desc: 'Maximum number of sources to return'
     def discover_source_metadata
       Commands::DiscoverSourceMetadataCommand.new(options, create_client).execute
     end

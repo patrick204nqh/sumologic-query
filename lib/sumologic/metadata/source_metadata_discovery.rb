@@ -22,8 +22,12 @@ module Sumologic
       # @param from_time [String] Start time (ISO 8601, unix timestamp, or relative)
       # @param to_time [String] End time
       # @param time_zone [String] Time zone (default: UTC)
-      # @param filter [String, nil] Optional filter query to scope results
-      def discover(from_time:, to_time:, time_zone: 'UTC', filter: nil)
+      # @param options [Hash] Optional filters — :filter, :keyword, :limit
+      def discover(from_time:, to_time:, time_zone: 'UTC', **options)
+        filter = options[:filter]
+        keyword = options[:keyword]
+        limit = options[:limit]
+
         query = build_query(filter)
         log_info "Discovering source metadata with query: #{query}"
         log_info "Time range: #{from_time} to #{to_time} (#{time_zone})"
@@ -39,6 +43,8 @@ module Sumologic
         )
 
         source_models = parse_aggregation_results(records)
+        source_models = filter_by_keyword(source_models, keyword) if keyword
+        source_models = source_models.take(limit) if limit
 
         {
           'time_range' => {
@@ -47,6 +53,7 @@ module Sumologic
             'time_zone' => time_zone
           },
           'filter' => filter,
+          'keyword' => keyword,
           'total_sources' => source_models.size,
           'sources' => source_models.map(&:to_h)
         }
@@ -55,6 +62,14 @@ module Sumologic
       end
 
       private
+
+      def filter_by_keyword(source_models, keyword)
+        pattern = keyword.downcase
+        source_models.select do |s|
+          (s.name || '').downcase.include?(pattern) ||
+            (s.category || '').downcase.include?(pattern)
+        end
+      end
 
       # Build aggregation query to discover sources
       def build_query(filter)

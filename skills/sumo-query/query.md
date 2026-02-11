@@ -43,7 +43,31 @@ Break down `$ARGUMENTS` into:
 - **Timezone**: If mentioned (default: UTC)
 - **Limit**: How many results (default: 50 for raw, 100 for aggregations)
 
-### Step 2: Build Query
+### Step 2: Discover Sources (if scope is unknown)
+
+If the user mentions a service or system but you don't know the exact `_sourceCategory`, discover it first:
+
+```bash
+sumo-query discover-source-metadata -k "<service keyword>" -l 20
+```
+
+Or run a broad aggregation:
+
+```bash
+sumo-query search \
+  -q '<keyword> | count by _sourceCategory, _sourceName | sort by _count desc' \
+  -f '-1h' -t 'now' -a -l 30
+```
+
+Use the discovered `_sourceCategory` in the query. Tell the user which source you found:
+
+```
+Found _sourceCategory=production/my-service (50K msgs/hr) — using this for the query.
+```
+
+**Skip this step** if the user already specified a `_sourceCategory` or the scope is clear.
+
+### Step 3: Build Query
 
 Construct the Sumo Logic query string following this syntax:
 
@@ -94,7 +118,7 @@ _source=<value>
 | limit 20
 ```
 
-### Step 3: Show Query Plan
+### Step 4: Show Query Plan
 
 Before executing, show the user:
 
@@ -106,7 +130,7 @@ Mode:    <raw or aggregate>
 Limit:   <number>
 ```
 
-### Step 4: Execute
+### Step 5: Execute
 
 Build the `sumo-query search` command:
 
@@ -126,7 +150,7 @@ sumo-query search \
 - Always include `-l` to limit output
 - Never use the `-i` flag (interactive mode is incompatible with this tool)
 
-### Step 5: Present Results
+### Step 6: Present Results
 
 Format the output for readability:
 - For **aggregation results**: Present as a formatted table or summary

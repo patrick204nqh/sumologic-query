@@ -98,11 +98,15 @@ module Sumologic
       @source.list(collector_id: collector_id)
     end
 
-    # List all sources from all collectors
+    # List all sources from all collectors with optional filtering
     #
+    # @param collector [String, nil] Filter collectors by name
+    # @param name [String, nil] Filter sources by name
+    # @param category [String, nil] Filter sources by category
+    # @param limit [Integer, nil] Maximum total sources to return
     # @return [Array<Hash>] Array of { 'collector' => Hash, 'sources' => Array<Hash> }
-    def list_all_sources
-      @source.list_all
+    def list_all_sources(collector: nil, name: nil, category: nil, limit: nil)
+      @source.list_all(collector: collector, name: name, category: category, limit: limit)
     end
 
     # Discover source metadata from actual log data

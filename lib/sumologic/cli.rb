@@ -100,18 +100,21 @@ module Sumologic
       Commands::ListCollectorsCommand.new(options, create_client).execute
     end
 
-    desc 'list-sources', 'List sources from collectors'
+    desc 'list-sources', 'List sources from collectors with optional filters'
     long_desc <<~DESC
-      List all sources from all collectors, or sources from a specific collector.
+      List sources from all collectors, or from a specific collector.
+      Supports filtering by collector name, source name, and category.
 
       Examples:
-        # List all sources
-        sumo-query list-sources
-
-        # List sources for specific collector
+        sumo-query list-sources --collector "my-service" --name "nginx" -l 20
+        sumo-query list-sources --category "production"
         sumo-query list-sources --collector-id 12345
     DESC
     option :collector_id, type: :string, desc: 'Collector ID to list sources for'
+    option :collector, type: :string, desc: 'Filter by collector name (case-insensitive)'
+    option :name, type: :string, aliases: '-n', desc: 'Filter by source name (case-insensitive)'
+    option :category, type: :string, desc: 'Filter by source category (case-insensitive)'
+    option :limit, type: :numeric, aliases: '-l', desc: 'Maximum total sources to return'
     def list_sources
       Commands::ListSourcesCommand.new(options, create_client).execute
     end

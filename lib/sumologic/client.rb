@@ -111,14 +111,14 @@ module Sumologic
     # @param from_time [String] Start time (ISO 8601, unix timestamp, or relative)
     # @param to_time [String] End time
     # @param time_zone [String] Time zone (default: UTC)
-    # @param filter [String, nil] Optional filter query to scope results
+    # @param options [Hash] Optional filters — :filter, :keyword, :limit
     # @return [Hash] Discovery results with source metadata
-    def discover_source_metadata(from_time:, to_time:, time_zone: 'UTC', filter: nil)
+    def discover_source_metadata(from_time:, to_time:, time_zone: 'UTC', **options)
       @source_metadata_discovery.discover(
         from_time: from_time,
         to_time: to_time,
         time_zone: time_zone,
-        filter: filter
+        **options
       )
     end
 

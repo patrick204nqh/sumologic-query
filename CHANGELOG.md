@@ -6,6 +6,21 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and release notes are automatically generated from commit messages.
+## [1.4.2](https://github.com/patrick204nqh/sumologic-query/compare/v1.4.1...v1.4.2) (2026-02-11)
+
+### 🎉 New Features
+
+- add source discovery guidance to skills
+- add filtering options to list-sources
+- add keyword and limit filters to discover-source-metadata
+- add -q/--query and -l/--limit flags to list-collectors
+
+### 🐛 Bug Fixes
+
+- support compound relative time expressions like -1h30m
+
+
+
 ## [1.4.1](https://github.com/patrick204nqh/sumologic-query/compare/v1.4.0...v1.4.1) (2026-02-11)
 
 ### 🎉 New Features

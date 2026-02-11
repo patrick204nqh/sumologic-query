@@ -7,7 +7,7 @@ module Sumologic
     # Parses various time formats into ISO 8601 strings for the Sumo Logic API
     # Supports:
     # - 'now' - current time
-    # - Relative times: '-30s', '-5m', '-2h', '-7d', '-1w', '-1M'
+    # - Relative times: '-30s', '-5m', '-2h', '-7d', '-1w', '-1M', '-1h30m'
     # - Unix timestamps: '1700000000' or 1700000000
     # - ISO 8601: '2025-11-13T14:00:00'
     class TimeParser
@@ -21,7 +21,9 @@ module Sumologic
         'M' => 2_592_000 # months (30 days approximation)
       }.freeze
 
-      RELATIVE_TIME_REGEX = /^([+-])(\d+)([smhdwM])$/.freeze
+      # Matches single or compound relative times: -30m, -1h30m, -2d3h15m
+      RELATIVE_TIME_REGEX = /^([+-])(\d+[smhdwM])+$/.freeze
+      RELATIVE_COMPONENT_REGEX = /(\d+)([smhdwM])/.freeze
 
       class ParseError < StandardError; end
 
@@ -32,10 +34,8 @@ module Sumologic
       def self.parse(time_str, _timezone: 'UTC')
         return parse_now if time_str.to_s.downcase == 'now'
 
-        # Try relative time format (e.g., '-30m', '+1h')
-        if time_str.is_a?(String) && (match = time_str.match(RELATIVE_TIME_REGEX))
-          return parse_relative_time(match)
-        end
+        # Try relative time format (e.g., '-30m', '+1h', '-1h30m')
+        return parse_relative_time(time_str) if time_str.is_a?(String) && time_str.match?(RELATIVE_TIME_REGEX)
 
         # Try Unix timestamp (integer or numeric string)
         return parse_unix_timestamp(time_str) if unix_timestamp?(time_str)
@@ -95,14 +95,14 @@ module Sumologic
         format_time(Time.now)
       end
 
-      private_class_method def self.parse_relative_time(match)
-        sign, amount, unit = match.captures
-        amount = amount.to_i
-        amount = -amount if sign == '-'
+      private_class_method def self.parse_relative_time(time_str)
+        sign = time_str[0]
+        components = time_str.scan(RELATIVE_COMPONENT_REGEX)
 
-        seconds_delta = amount * UNITS[unit]
+        seconds_delta = components.sum { |amount, unit| amount.to_i * UNITS[unit] }
+        seconds_delta = -seconds_delta if sign == '-'
+
         target_time = Time.now + seconds_delta
-
         format_time(target_time)
       end
 

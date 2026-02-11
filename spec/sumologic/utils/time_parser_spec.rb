@@ -63,6 +63,26 @@ RSpec.describe Sumologic::Utils::TimeParser do
         result = described_class.parse('-100m')
         expect(result).to eq('2025-11-19T10:20:00')
       end
+
+      it 'parses compound hours and minutes' do
+        result = described_class.parse('-1h30m')
+        expect(result).to eq('2025-11-19T10:30:00')
+      end
+
+      it 'parses compound days and hours' do
+        result = described_class.parse('-2d3h')
+        expect(result).to eq('2025-11-17T09:00:00')
+      end
+
+      it 'parses compound days, hours, and minutes' do
+        result = described_class.parse('-1d2h30m')
+        expect(result).to eq('2025-11-18T09:30:00')
+      end
+
+      it 'parses compound with positive offset' do
+        result = described_class.parse('+1h30m')
+        expect(result).to eq('2025-11-19T13:30:00')
+      end
     end
 
     context 'with Unix timestamps' do

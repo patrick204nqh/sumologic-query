@@ -41,7 +41,7 @@ module Sumologic
       Time Formats:
         --from and --to support multiple formats:
         • 'now' - current time
-        • Relative: '-30s', '-5m', '-2h', '-7d', '-1w', '-1M' (sec/min/hour/day/week/month)
+        • Relative: '-30s', '-5m', '-2h', '-1h30m', '-7d', '-1w', '-1M' (compound supported)
         • Unix timestamp: '1700000000' (seconds since epoch)
         • ISO 8601: '2025-11-13T14:00:00'
 
@@ -138,7 +138,7 @@ module Sumologic
       Time Formats:
         --from and --to support multiple formats:
         • 'now' - current time
-        • Relative: '-30s', '-5m', '-2h', '-7d', '-1w', '-1M' (sec/min/hour/day/week/month)
+        • Relative: '-30s', '-5m', '-2h', '-1h30m', '-7d', '-1w', '-1M' (compound supported)
         • Unix timestamp: '1700000000' (seconds since epoch)
         • ISO 8601: '2025-11-13T14:00:00'
 

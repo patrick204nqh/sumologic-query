@@ -6,6 +6,27 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and release notes are automatically generated from commit messages.
+## [1.4.1](https://github.com/patrick204nqh/sumologic-query/compare/v1.4.0...v1.4.1) (2026-02-11)
+
+### 🎉 New Features
+
+- add "Open in Sumo Logic" URL to search output
+- add command recipe and CLI command specs
+
+### 🐛 Bug Fixes
+
+- update source_code_uri metadata to use homepage
+
+### 🔧 Refactoring
+
+- resolve ADR-006, fix README links, extract command helpers
+
+### 📚 Documentation
+
+- consolidate query examples and document v1/v2 API split
+
+
+
 ## [1.4.0](https://github.com/patrick204nqh/sumologic-query/compare/v1.3.5...v1.4.0) (2026-02-11)
 
 ### 🎉 New Features

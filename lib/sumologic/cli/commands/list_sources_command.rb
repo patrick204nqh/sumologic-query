@@ -29,10 +29,14 @@ module Sumologic
         end
 
         def list_all_sources
-          warn 'Fetching all sources from all collectors...'
-          warn 'This may take a minute...'
+          warn 'Fetching sources from collectors...'
 
-          all_sources = client.list_all_sources
+          all_sources = client.list_all_sources(
+            collector: options[:collector],
+            name: options[:name],
+            category: options[:category],
+            limit: options[:limit]
+          )
 
           output_json(
             total_collectors: all_sources.size,

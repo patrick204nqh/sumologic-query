@@ -120,12 +120,25 @@ RSpec.describe 'CLI Commands' do
     end
 
     it 'lists all sources when no collector_id given' do
-      allow(client).to receive(:list_all_sources).and_return(
-        [{ 'collector' => { 'id' => '1' }, 'sources' => [{ 'id' => 's1' }] }]
-      )
+      allow(client).to receive(:list_all_sources)
+        .with(collector: nil, name: nil, category: nil, limit: nil)
+        .and_return(
+          [{ 'collector' => { 'id' => '1' }, 'sources' => [{ 'id' => 's1' }] }]
+        )
 
       command = described_class.new(options, client)
       expect { command.execute }.to output(/"total_collectors": 1/).to_stdout
+    end
+
+    it 'passes filter options when listing all sources' do
+      allow(client).to receive(:list_all_sources)
+        .with(collector: 'web', name: 'nginx', category: 'prod', limit: 10)
+        .and_return([])
+
+      command = described_class.new(
+        options.merge(collector: 'web', name: 'nginx', category: 'prod', limit: 10), client
+      )
+      expect { command.execute }.to output(/"total_collectors": 0/).to_stdout
     end
   end
 

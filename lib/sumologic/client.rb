@@ -6,7 +6,7 @@ module Sumologic
   class Client
     attr_reader :config
 
-    def initialize(config = nil)
+    def initialize(config = nil) # rubocop:disable Metrics/MethodLength
       @config = config || Configuration.new
       @config.validate!
 
@@ -32,7 +32,7 @@ module Sumologic
       @search = Search::Job.new(http_client: @http, config: @config)
       @collector = Metadata::Collector.new(http_client: @http)
       @source = Metadata::Source.new(http_client: @http, collector_client: @collector, config: @config)
-      @dynamic_source_discovery = Metadata::DynamicSourceDiscovery.new(
+      @source_metadata_discovery = Metadata::SourceMetadataDiscovery.new(
         http_client: @http,
         search_job: @search,
         config: @config
@@ -48,13 +48,13 @@ module Sumologic
     end
 
     # Search logs with query
-    # Returns array of messages
     #
     # @param query [String] Sumo Logic query
     # @param from_time [String] Start time (ISO 8601, unix timestamp, or relative)
     # @param to_time [String] End time
     # @param time_zone [String] Time zone (default: UTC)
     # @param limit [Integer, nil] Maximum number of messages to return (stops fetching after limit)
+    # @return [Array<Hash>] Array of message hashes
     def search(query:, from_time:, to_time:, time_zone: 'UTC', limit: nil)
       @search.execute(
         query: query,
@@ -66,13 +66,13 @@ module Sumologic
     end
 
     # Search with aggregation query (count by, group by, etc.)
-    # Returns array of aggregation records instead of raw messages
     #
     # @param query [String] Sumo Logic aggregation query (must include count, sum, avg, etc.)
     # @param from_time [String] Start time (ISO 8601, unix timestamp, or relative)
     # @param to_time [String] End time
     # @param time_zone [String] Time zone (default: UTC)
     # @param limit [Integer, nil] Maximum number of records to return
+    # @return [Array<Hash>] Array of aggregation record hashes
     def search_aggregation(query:, from_time:, to_time:, time_zone: 'UTC', limit: nil)
       @search.execute_aggregation(
         query: query,
@@ -84,33 +84,37 @@ module Sumologic
     end
 
     # List all collectors
-    # Returns array of collector objects
+    #
+    # @return [Array<Hash>] Array of collector hashes
     def list_collectors
       @collector.list
     end
 
     # List sources for a specific collector
-    # Returns array of source objects
+    #
+    # @param collector_id [String] The collector ID
+    # @return [Array<Hash>] Array of source hashes
     def list_sources(collector_id:)
       @source.list(collector_id: collector_id)
     end
 
     # List all sources from all collectors
-    # Returns array of hashes with collector and sources
+    #
+    # @return [Array<Hash>] Array of { 'collector' => Hash, 'sources' => Array<Hash> }
     def list_all_sources
       @source.list_all
     end
 
-    # Discover dynamic source names from actual log data
+    # Discover source metadata from actual log data
     # Useful for CloudWatch/ECS sources with dynamic _sourceName values
-    # Returns hash with ALL unique source names found, with message counts
     #
     # @param from_time [String] Start time (ISO 8601, unix timestamp, or relative)
     # @param to_time [String] End time
     # @param time_zone [String] Time zone (default: UTC)
     # @param filter [String, nil] Optional filter query to scope results
-    def discover_dynamic_sources(from_time:, to_time:, time_zone: 'UTC', filter: nil)
-      @dynamic_source_discovery.discover(
+    # @return [Hash] Discovery results with source metadata
+    def discover_source_metadata(from_time:, to_time:, time_zone: 'UTC', filter: nil)
+      @source_metadata_discovery.discover(
         from_time: from_time,
         to_time: to_time,
         time_zone: time_zone,
@@ -123,19 +127,19 @@ module Sumologic
     # ============================================================
 
     # List monitors with optional status and query filters
-    # Uses GET /v1/monitors/search for flat, paginated results
     #
     # @param query [String, nil] Search query to filter by name/description
     # @param status [String, nil] Filter by status (Normal, Critical, Warning, MissingData, Disabled, AllTriggered)
     # @param limit [Integer] Maximum monitors to return (default: 100)
+    # @return [Array<Hash>] Array of monitor hashes
     def list_monitors(query: nil, status: nil, limit: 100)
       @monitor.list(query: query, status: status, limit: limit)
     end
 
     # Get a specific monitor by ID
-    # Returns full monitor details
     #
     # @param monitor_id [String] The monitor ID
+    # @return [Hash] Monitor details
     def get_monitor(monitor_id:)
       @monitor.get(monitor_id)
     end
@@ -145,30 +149,25 @@ module Sumologic
     # ============================================================
 
     # Get the personal folder for current user
-    # Returns folder with children
+    #
+    # @return [Hash] Folder hash with children
     def personal_folder
       @folder.personal
     end
 
-    # Get the global (admin) folder
-    # Requires admin privileges
-    def global_folder
-      @folder.global
-    end
-
     # Get a specific folder by ID
-    # Returns folder details with children
     #
     # @param folder_id [String] The folder ID
+    # @return [Hash] Folder hash with children
     def get_folder(folder_id:)
       @folder.get(folder_id)
     end
 
     # Get folder tree starting from a folder
-    # Recursively fetches children up to max_depth
     #
     # @param folder_id [String, nil] Starting folder ID (nil for personal)
     # @param max_depth [Integer] Maximum recursion depth (default: 3)
+    # @return [Hash] Folder tree with nested children
     def folder_tree(folder_id: nil, max_depth: 3)
       @folder.tree(folder_id: folder_id, max_depth: max_depth)
     end
@@ -178,17 +177,17 @@ module Sumologic
     # ============================================================
 
     # List all dashboards
-    # Returns array of dashboard objects
     #
     # @param limit [Integer] Maximum dashboards to return (default: 100)
+    # @return [Array<Hash>] Array of dashboard hashes
     def list_dashboards(limit: 100)
       @dashboard.list(limit: limit)
     end
 
     # Get a specific dashboard by ID
-    # Returns full dashboard details including panels
     #
     # @param dashboard_id [String] The dashboard ID
+    # @return [Hash] Dashboard hash including panels
     def get_dashboard(dashboard_id:)
       @dashboard.get(dashboard_id)
     end
@@ -197,6 +196,7 @@ module Sumologic
     #
     # @param query [String] Search query
     # @param limit [Integer] Maximum results
+    # @return [Array<Hash>] Array of matching dashboard hashes
     def search_dashboards(query:, limit: 100)
       @dashboard.search(query: query, limit: limit)
     end
@@ -208,6 +208,7 @@ module Sumologic
     # List health events for collectors, sources, and ingest budgets
     #
     # @param limit [Integer] Maximum events to return (default: 100)
+    # @return [Array<Hash>] Array of health event hashes
     def list_health_events(limit: 100)
       @health_event.list(limit: limit)
     end
@@ -217,11 +218,15 @@ module Sumologic
     # ============================================================
 
     # List custom fields
+    #
+    # @return [Array<Hash>] Array of field hashes
     def list_fields
       @field.list
     end
 
     # List built-in fields
+    #
+    # @return [Array<Hash>] Array of built-in field hashes
     def list_builtin_fields
       @field.list_builtin
     end
@@ -231,9 +236,9 @@ module Sumologic
     # ============================================================
 
     # Get a specific lookup table by ID
-    # Note: There is no list-all endpoint for lookup tables
     #
     # @param lookup_id [String] The lookup table ID
+    # @return [Hash] Lookup table details
     def get_lookup(lookup_id:)
       @lookup_table.get(lookup_id)
     end
@@ -243,6 +248,8 @@ module Sumologic
     # ============================================================
 
     # List available apps from the Sumo Logic app catalog
+    #
+    # @return [Array<Hash>] Array of app hashes
     def list_apps
       @app.list
     end
@@ -254,14 +261,16 @@ module Sumologic
     # Get a content item by its library path
     #
     # @param path [String] Content library path (e.g., '/Library/Users/me/My Search')
+    # @return [Hash] Content item details
     def get_content(path:)
       @content.get_by_path(path)
     end
 
     # Export a content item as JSON
-    # Handles async job lifecycle: start → poll → fetch result
+    # Handles async job lifecycle: start, poll, fetch result
     #
     # @param content_id [String] The content item ID to export
+    # @return [Hash] Exported content definition
     def export_content(content_id:)
       @content.export(content_id)
     end

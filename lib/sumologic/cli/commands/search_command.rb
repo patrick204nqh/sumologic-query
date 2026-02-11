@@ -52,7 +52,7 @@ module Sumologic
         end
 
         def perform_search
-          if options[:aggregate]
+          if aggregate_mode?
             client.search_aggregation(
               query: options[:query],
               from_time: @parsed_from,
@@ -71,8 +71,16 @@ module Sumologic
           end
         end
 
+        def aggregate_mode?
+          options[:aggregate] || aggregation_query?(options[:query])
+        end
+
+        def aggregation_query?(query)
+          query.match?(/\|\s*(count|sum|avg|min|max|pct|first|last|group)\b/i)
+        end
+
         def display_results_summary(results)
-          result_type = options[:aggregate] ? 'records' : 'messages'
+          result_type = aggregate_mode? ? 'records' : 'messages'
           warn '=' * 60
           warn "Results: #{results.size} #{result_type}"
           warn '=' * 60
@@ -80,7 +88,7 @@ module Sumologic
         end
 
         def output_search_results(results)
-          if options[:aggregate]
+          if aggregate_mode?
             output_json(
               query: options[:query],
               from: @parsed_from,
@@ -106,7 +114,7 @@ module Sumologic
         end
 
         def launch_interactive_mode(results)
-          if options[:aggregate]
+          if aggregate_mode?
             warn 'Interactive mode is not supported for aggregation queries'
             output_search_results(results)
             return

@@ -31,26 +31,6 @@ module Sumologic
             puts json_output
           end
         end
-
-        def format_collector(collector)
-          {
-            id: collector['id'],
-            name: collector['name'],
-            collectorType: collector['collectorType'],
-            alive: collector['alive'],
-            category: collector['category']
-          }
-        end
-
-        def format_source(source)
-          {
-            id: source['id'],
-            name: source['name'],
-            category: source['category'],
-            sourceType: source['sourceType'],
-            alive: source['alive']
-          }
-        end
       end
     end
   end

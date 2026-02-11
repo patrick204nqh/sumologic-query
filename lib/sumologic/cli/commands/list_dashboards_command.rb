@@ -13,23 +13,8 @@ module Sumologic
 
           output_json(
             total: dashboards.size,
-            dashboards: dashboards.map { |d| format_dashboard(d) }
+            dashboards: dashboards
           )
-        end
-
-        private
-
-        def format_dashboard(dashboard)
-          {
-            id: dashboard['id'],
-            title: dashboard['title'],
-            description: dashboard['description'],
-            folderId: dashboard['folderId'],
-            domain: dashboard['domain'],
-            refreshInterval: dashboard['refreshInterval'],
-            theme: dashboard['theme'],
-            contentId: dashboard['contentId']
-          }.compact
         end
       end
     end

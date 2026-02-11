@@ -13,7 +13,7 @@ module Sumologic
 
           output_json(
             total: collectors.size,
-            collectors: collectors.map { |c| format_collector(c) }
+            collectors: collectors
           )
         end
       end

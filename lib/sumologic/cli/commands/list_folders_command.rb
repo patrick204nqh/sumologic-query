@@ -47,24 +47,7 @@ module Sumologic
         end
 
         def output_folder_with_children(folder)
-          children = folder['children'] || []
-          output_json(
-            id: folder['id'],
-            name: folder['name'],
-            description: folder['description'],
-            itemType: folder['itemType'],
-            childCount: children.size,
-            children: children.map { |c| format_child(c) }
-          )
-        end
-
-        def format_child(child)
-          {
-            id: child['id'],
-            name: child['name'],
-            itemType: child['itemType'],
-            description: child['description']
-          }.compact
+          output_json(folder)
         end
       end
     end

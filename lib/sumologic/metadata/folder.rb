@@ -32,22 +32,6 @@ module Sumologic
         raise Error, "Failed to get personal folder: #{e.message}"
       end
 
-      # Get the global (admin) folder
-      # Requires admin privileges
-      #
-      # @return [Hash] Global folder data
-      def global
-        data = @http.request(
-          method: :get,
-          path: '/content/folders/global'
-        )
-
-        log_info "Retrieved global folder: #{data['name']}"
-        data
-      rescue StandardError => e
-        raise Error, "Failed to get global folder: #{e.message}"
-      end
-
       # Get a specific folder by ID
       # Returns folder details with children
       #
@@ -63,36 +47,6 @@ module Sumologic
         data
       rescue StandardError => e
         raise Error, "Failed to get folder #{folder_id}: #{e.message}"
-      end
-
-      # Get folder status (async job status)
-      # Used when folder operations return a job ID
-      #
-      # @param job_id [String] The job ID
-      # @return [Hash] Job status
-      def job_status(job_id)
-        @http.request(
-          method: :get,
-          path: "/content/folders/#{job_id}/status"
-        )
-      rescue StandardError => e
-        raise Error, "Failed to get folder job status: #{e.message}"
-      end
-
-      # Get the admin recommended folder
-      # Contains content shared by admins
-      #
-      # @return [Hash] Admin recommended folder data
-      def admin_recommended
-        data = @http.request(
-          method: :get,
-          path: '/content/folders/adminRecommended'
-        )
-
-        log_info 'Retrieved admin recommended folder'
-        data
-      rescue StandardError => e
-        raise Error, "Failed to get admin recommended folder: #{e.message}"
       end
 
       # List all items in a folder (recursive tree)

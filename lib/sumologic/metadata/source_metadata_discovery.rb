@@ -5,9 +5,9 @@ require_relative 'models'
 
 module Sumologic
   module Metadata
-    # Discovers dynamic source names from actual log data via Search API
+    # Discovers source metadata from actual log data via Search API
     # Useful for CloudWatch/ECS sources that use dynamic _sourceName values
-    class DynamicSourceDiscovery
+    class SourceMetadataDiscovery
       include Loggable
 
       def initialize(http_client:, search_job:, config: nil)
@@ -16,7 +16,7 @@ module Sumologic
         @config = config || Configuration.new
       end
 
-      # Discover dynamic source names from logs
+      # Discover source metadata from logs
       # Returns hash with ALL unique source names found
       #
       # @param from_time [String] Start time (ISO 8601, unix timestamp, or relative)
@@ -25,7 +25,7 @@ module Sumologic
       # @param filter [String, nil] Optional filter query to scope results
       def discover(from_time:, to_time:, time_zone: 'UTC', filter: nil)
         query = build_query(filter)
-        log_info "Discovering dynamic sources with query: #{query}"
+        log_info "Discovering source metadata with query: #{query}"
         log_info "Time range: #{from_time} to #{to_time} (#{time_zone})"
 
         # Fetch aggregated records to find all unique sources
@@ -51,7 +51,7 @@ module Sumologic
           'sources' => source_models.map(&:to_h)
         }
       rescue StandardError => e
-        raise Error, "Failed to discover dynamic sources: #{e.message}"
+        raise Error, "Failed to discover source metadata: #{e.message}"
       end
 
       private
@@ -67,7 +67,7 @@ module Sumologic
       end
 
       # Parse aggregation records from search API
-      # Returns array of DynamicSourceModel objects
+      # @return [Array<SourceMetadata>]
       def parse_aggregation_results(records)
         return [] if records.empty?
 
@@ -135,7 +135,7 @@ module Sumologic
       # Build and sort model objects from source hash
       def build_source_models(sources_hash)
         source_models = sources_hash.values.map do |source_data|
-          DynamicSourceModel.new(
+          SourceMetadata.new(
             name: source_data[:name],
             category: source_data[:category],
             message_count: source_data[:count]

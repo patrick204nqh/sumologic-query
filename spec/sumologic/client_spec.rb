@@ -104,8 +104,8 @@ RSpec.describe Sumologic::Client do
       expect(client).to respond_to(:list_all_sources)
     end
 
-    it 'responds to discover_dynamic_sources' do
-      expect(client).to respond_to(:discover_dynamic_sources)
+    it 'responds to discover_source_metadata' do
+      expect(client).to respond_to(:discover_source_metadata)
     end
 
     # Monitors API
@@ -120,10 +120,6 @@ RSpec.describe Sumologic::Client do
     # Folders API
     it 'responds to personal_folder' do
       expect(client).to respond_to(:personal_folder)
-    end
-
-    it 'responds to global_folder' do
-      expect(client).to respond_to(:global_folder)
     end
 
     it 'responds to get_folder' do

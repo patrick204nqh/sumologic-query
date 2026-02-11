@@ -20,7 +20,8 @@ module Sumologic
       # Supports server-side filtering by status and query
       #
       # @param query [String, nil] Search query to filter by name/description
-      # @param status [String, nil] Monitor status filter (Normal, Critical, Warning, MissingData, Disabled, AllTriggered)
+      # @param status [String, nil] Monitor status filter
+      #   (Normal, Critical, Warning, MissingData, Disabled, AllTriggered)
       # @param limit [Integer] Maximum number of monitors to return (default: 100)
       # @return [Array<Hash>] Array of monitor data with path info
       def list(query: nil, status: nil, limit: 100)
@@ -45,6 +46,7 @@ module Sumologic
           log_info "Fetched #{items.size} monitors (total: #{monitors.size})"
 
           break if items.size < batch_limit || monitors.size >= limit
+
           offset += batch_limit
         end
 
@@ -88,7 +90,7 @@ module Sumologic
 
       def extract_monitors(data)
         items = data || []
-        items = items.is_a?(Array) ? items : []
+        items = [] unless items.is_a?(Array)
 
         items.filter_map do |item|
           monitor = item['item'] || item

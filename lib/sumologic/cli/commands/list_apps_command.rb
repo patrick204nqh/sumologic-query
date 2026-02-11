@@ -13,18 +13,8 @@ module Sumologic
 
           output_json(
             total: apps.size,
-            apps: apps.map { |a| format_app(a) }
+            apps: apps
           )
-        end
-
-        private
-
-        def format_app(app)
-          {
-            appId: app['appId'] || app['uuid'],
-            name: app['appDefinition']&.dig('name') || app['name'],
-            description: app['appDefinition']&.dig('description') || app['description']
-          }.compact
         end
       end
     end

@@ -6,8 +6,8 @@ require_relative '../../utils/time_parser'
 module Sumologic
   class CLI < Thor
     module Commands
-      # Handles the discover-sources command execution
-      class DiscoverSourcesCommand < BaseCommand
+      # Handles the discover-source-metadata command execution
+      class DiscoverSourceMetadataCommand < BaseCommand
         def execute
           parse_time_options
           log_discovery_info
@@ -32,7 +32,7 @@ module Sumologic
 
         def log_discovery_info
           warn '=' * 60
-          warn 'Discovering Dynamic Source Names'
+          warn 'Discovering Source Metadata'
           warn '=' * 60
           warn "Time Range: #{@original_from} to #{@original_to}"
           if @original_from != @parsed_from || @original_to != @parsed_to
@@ -46,7 +46,7 @@ module Sumologic
         end
 
         def perform_discovery
-          client.discover_dynamic_sources(
+          client.discover_source_metadata(
             from_time: @parsed_from,
             to_time: @parsed_to,
             time_zone: @parsed_timezone,

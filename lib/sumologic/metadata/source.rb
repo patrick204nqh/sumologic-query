@@ -2,7 +2,6 @@
 
 require_relative 'collector_source_fetcher'
 require_relative 'loggable'
-require_relative 'models'
 
 module Sumologic
   module Metadata
@@ -54,7 +53,7 @@ module Sumologic
       private
 
       # Fetch sources for a single collector
-      # Returns CollectorWithSources model
+      # @return [Hash] collector and sources data
       def fetch_collector_sources(collector)
         collector_id = collector['id']
         collector_name = collector['name']
@@ -62,11 +61,10 @@ module Sumologic
         log_info "Fetching sources for collector: #{collector_name} (#{collector_id})"
         sources = list(collector_id: collector_id)
 
-        # Create model and convert to hash for backward compatibility
-        CollectorWithSources.new(
-          collector: collector,
-          sources: sources
-        ).to_h
+        {
+          'collector' => collector,
+          'sources' => sources
+        }
       rescue StandardError => e
         log_error "Failed to fetch sources for collector #{collector_name}: #{e.message}"
         nil

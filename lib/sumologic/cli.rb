@@ -5,7 +5,7 @@ require 'json'
 require_relative 'cli/commands/search_command'
 require_relative 'cli/commands/list_collectors_command'
 require_relative 'cli/commands/list_sources_command'
-require_relative 'cli/commands/discover_sources_command'
+require_relative 'cli/commands/discover_source_metadata_command'
 require_relative 'cli/commands/list_monitors_command'
 require_relative 'cli/commands/get_monitor_command'
 require_relative 'cli/commands/list_folders_command'
@@ -21,7 +21,7 @@ require_relative 'cli/commands/export_content_command'
 module Sumologic
   # Thor-based CLI for Sumo Logic query tool
   # Delegates commands to specialized command classes
-  class CLI < Thor
+  class CLI < Thor # rubocop:disable Metrics/ClassLength
     class_option :debug, type: :boolean, aliases: '-d', desc: 'Enable debug output'
     class_option :output, type: :string, aliases: '-o', desc: 'Output file (default: stdout)'
 
@@ -116,9 +116,9 @@ module Sumologic
       Commands::ListSourcesCommand.new(options, create_client).execute
     end
 
-    desc 'discover-sources', 'Discover source names from log data using search aggregation'
+    desc 'discover-source-metadata', 'Discover source metadata from log data using search aggregation'
     long_desc <<~DESC
-      Discovers source names from actual log data using search aggregation.
+      Discovers source metadata from actual log data using search aggregation.
       Useful for CloudWatch/ECS/Lambda sources with dynamic _sourceName values
       that are not visible in the Collectors API.
 
@@ -137,19 +137,19 @@ module Sumologic
 
       Examples:
         # Discover all sources from last 24 hours (default)
-        sumo-query discover-sources
+        sumo-query discover-source-metadata
 
         # Discover sources from last 7 days
-        sumo-query discover-sources --from '-7d' --to 'now'
+        sumo-query discover-source-metadata --from '-7d' --to 'now'
 
         # Filter by source category (ECS only)
-        sumo-query discover-sources --filter '_sourceCategory=*ecs*'
+        sumo-query discover-source-metadata --filter '_sourceCategory=*ecs*'
 
         # Discover CloudWatch sources
-        sumo-query discover-sources --filter '_sourceCategory=*cloudwatch*'
+        sumo-query discover-source-metadata --filter '_sourceCategory=*cloudwatch*'
 
         # Save to file
-        sumo-query discover-sources --output discovered-sources.json
+        sumo-query discover-source-metadata --output discovered-sources.json
     DESC
     option :from, type: :string, default: '-24h', aliases: '-f',
                   desc: 'Start time (default: -24h)'
@@ -158,8 +158,8 @@ module Sumologic
     option :time_zone, type: :string, default: 'UTC', aliases: '-z',
                        desc: 'Time zone (UTC, EST, AEST, +00:00, America/New_York, Australia/Sydney)'
     option :filter, type: :string, desc: 'Optional filter query (e.g., _sourceCategory=*ecs*)'
-    def discover_sources
-      Commands::DiscoverSourcesCommand.new(options, create_client).execute
+    def discover_source_metadata
+      Commands::DiscoverSourceMetadataCommand.new(options, create_client).execute
     end
 
     # ============================================================

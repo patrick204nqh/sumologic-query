@@ -8,7 +8,8 @@ RSpec.describe Sumologic::Metadata::App do
     it 'returns apps from the catalog' do
       response = {
         'apps' => [
-          { 'appId' => 'a1', 'appDefinition' => { 'name' => 'AWS CloudTrail', 'description' => 'Monitor AWS API calls' } },
+          { 'appId' => 'a1',
+            'appDefinition' => { 'name' => 'AWS CloudTrail', 'description' => 'Monitor AWS API calls' } },
           { 'appId' => 'a2', 'appDefinition' => { 'name' => 'Kubernetes', 'description' => 'Monitor K8s clusters' } }
         ]
       }

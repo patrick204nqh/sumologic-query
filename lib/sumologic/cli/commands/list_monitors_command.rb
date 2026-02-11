@@ -18,25 +18,8 @@ module Sumologic
 
           output_json(
             total: monitors.size,
-            monitors: monitors.map { |m| format_monitor(m) }
+            monitors: monitors
           )
-        end
-
-        private
-
-        def format_monitor(monitor)
-          {
-            id: monitor['id'],
-            name: monitor['name'],
-            description: monitor['description'],
-            monitorType: monitor['monitorType'],
-            status: monitor['status'],
-            isDisabled: monitor['isDisabled'],
-            path: monitor['path'],
-            contentType: monitor['contentType'],
-            createdAt: monitor['createdAt'],
-            modifiedAt: monitor['modifiedAt']
-          }.compact
         end
       end
     end

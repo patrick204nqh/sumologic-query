@@ -1,48 +1,35 @@
 # frozen_string_literal: true
 
-RSpec.describe Sumologic::Metadata::DashboardModel do
-  let(:data) do
-    {
-      'id' => 'dash123',
-      'title' => 'Production Errors',
-      'description' => 'Error monitoring',
-      'folderId' => 'folder456',
-      'domain' => 'aws',
-      'refreshInterval' => 300,
-      'theme' => 'Dark',
-      'contentId' => 'content789',
-      'panels' => [{ 'id' => 'panel1' }],
-      'layout' => { 'layoutType' => 'Grid' }
-    }
+RSpec.describe Sumologic::Metadata::SourceMetadata do
+  let(:model) do
+    described_class.new(
+      name: 'ecs/my-service',
+      category: 'aws/ecs/production',
+      message_count: 1500
+    )
   end
 
-  let(:model) { described_class.new(data) }
-
   describe '#to_h' do
-    it 'includes v2 fields' do
+    it 'includes all fields' do
       hash = model.to_h
-      expect(hash['id']).to eq('dash123')
-      expect(hash['title']).to eq('Production Errors')
-      expect(hash['description']).to eq('Error monitoring')
-      expect(hash['folderId']).to eq('folder456')
-      expect(hash['domain']).to eq('aws')
-      expect(hash['refreshInterval']).to eq(300)
-      expect(hash['theme']).to eq('Dark')
-      expect(hash['contentId']).to eq('content789')
+      expect(hash['name']).to eq('ecs/my-service')
+      expect(hash['category']).to eq('aws/ecs/production')
+      expect(hash['message_count']).to eq(1500)
     end
 
     it 'omits nil values' do
-      sparse_model = described_class.new({ 'id' => '1', 'title' => 'Minimal' })
-      hash = sparse_model.to_h
-      expect(hash.keys).to contain_exactly('id', 'title')
+      sparse = described_class.new(name: 'test', category: nil, message_count: 0)
+      hash = sparse.to_h
+      expect(hash.keys).to contain_exactly('name', 'message_count')
     end
   end
 
-  describe '#to_full_h' do
-    it 'returns the full raw API data' do
-      full = model.to_full_h
-      expect(full['panels']).to eq([{ 'id' => 'panel1' }])
-      expect(full['layout']).to eq({ 'layoutType' => 'Grid' })
+  describe '#<=>' do
+    it 'sorts by message count descending' do
+      high = described_class.new(name: 'a', category: 'cat', message_count: 1000)
+      low = described_class.new(name: 'b', category: 'cat', message_count: 100)
+      sorted = [low, high].sort
+      expect(sorted.map(&:name)).to eq(%w[a b])
     end
   end
 end

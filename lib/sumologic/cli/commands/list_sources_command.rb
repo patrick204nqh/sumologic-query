@@ -24,7 +24,7 @@ module Sumologic
           output_json(
             collector_id: options[:collector_id],
             total: sources.size,
-            sources: sources.map { |s| format_source(s) }
+            sources: sources
           )
         end
 
@@ -37,15 +37,8 @@ module Sumologic
           output_json(
             total_collectors: all_sources.size,
             total_sources: all_sources.sum { |c| c['sources'].size },
-            data: all_sources.map { |item| format_collector_with_sources(item) }
+            data: all_sources
           )
-        end
-
-        def format_collector_with_sources(item)
-          {
-            collector: item['collector'],
-            sources: item['sources'].map { |s| format_source(s) }
-          }
         end
       end
     end

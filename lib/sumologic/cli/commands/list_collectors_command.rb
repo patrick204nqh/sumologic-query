@@ -8,7 +8,12 @@ module Sumologic
       # Handles the list-collectors command execution
       class ListCollectorsCommand < BaseCommand
         def execute
-          list_resource(label: 'collectors', key: :collectors) { client.list_collectors }
+          list_resource(label: 'collectors', key: :collectors) do
+            client.list_collectors(
+              query: options[:query],
+              limit: options[:limit]
+            )
+          end
         end
       end
     end

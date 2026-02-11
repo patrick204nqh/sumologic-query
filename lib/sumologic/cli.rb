@@ -89,13 +89,17 @@ module Sumologic
       Commands::SearchCommand.new(options, create_client).execute
     end
 
-    desc 'list-collectors', 'List all Sumo Logic collectors'
+    desc 'list-collectors', 'List Sumo Logic collectors with optional filters'
     long_desc <<~DESC
-      List all collectors in your Sumo Logic account.
+      List collectors in your Sumo Logic account.
+      Supports filtering by name/category and limiting results.
 
-      Example:
+      Examples:
+        sumo-query list-collectors -q "my-service" -l 20
         sumo-query list-collectors --output collectors.json
     DESC
+    option :query, type: :string, aliases: '-q', desc: 'Filter by name or category (case-insensitive)'
+    option :limit, type: :numeric, aliases: '-l', desc: 'Maximum collectors to return'
     def list_collectors
       Commands::ListCollectorsCommand.new(options, create_client).execute
     end

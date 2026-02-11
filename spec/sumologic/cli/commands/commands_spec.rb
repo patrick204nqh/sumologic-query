@@ -24,9 +24,20 @@ RSpec.describe 'CLI Commands' do
 
   describe Sumologic::CLI::Commands::ListCollectorsCommand do
     it 'outputs collectors as JSON' do
-      allow(client).to receive(:list_collectors).and_return([{ 'id' => '1', 'name' => 'c1' }])
+      allow(client).to receive(:list_collectors)
+        .with(query: nil, limit: nil)
+        .and_return([{ 'id' => '1', 'name' => 'c1' }])
 
       command = described_class.new(options, client)
+      expect { command.execute }.to output(/"total": 1/).to_stdout
+    end
+
+    it 'passes query and limit filters' do
+      allow(client).to receive(:list_collectors)
+        .with(query: 'prod', limit: 10)
+        .and_return([{ 'id' => '1', 'name' => 'prod-web' }])
+
+      command = described_class.new(options.merge(query: 'prod', limit: 10), client)
       expect { command.execute }.to output(/"total": 1/).to_stdout
     end
   end

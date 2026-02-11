@@ -83,11 +83,13 @@ module Sumologic
       )
     end
 
-    # List all collectors
+    # List collectors with optional filtering
     #
+    # @param query [String, nil] Filter by name or category (case-insensitive)
+    # @param limit [Integer, nil] Maximum number of collectors to return
     # @return [Array<Hash>] Array of collector hashes
-    def list_collectors
-      @collector.list
+    def list_collectors(query: nil, limit: nil)
+      @collector.list(query: query, limit: limit)
     end
 
     # List sources for a specific collector

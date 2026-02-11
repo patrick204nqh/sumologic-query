@@ -18,8 +18,7 @@ Gem::Specification.new do |spec|
   spec.license = 'MIT'
   spec.required_ruby_version = '>= 2.7.0'
 
-  spec.metadata['homepage_uri'] = spec.homepage
-  spec.metadata['source_code_uri'] = 'https://github.com/patrick204nqh/sumologic-query'
+  spec.metadata['source_code_uri'] = spec.homepage
   spec.metadata['bug_tracker_uri'] = 'https://github.com/patrick204nqh/sumologic-query/issues'
   spec.metadata['changelog_uri'] = 'https://github.com/patrick204nqh/sumologic-query/blob/main/CHANGELOG.md'
   spec.metadata['rubygems_mfa_required'] = 'true'

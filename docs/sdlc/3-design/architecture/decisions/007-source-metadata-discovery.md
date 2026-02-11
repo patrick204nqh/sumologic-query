@@ -1,8 +1,8 @@
-# ADR 007: Dynamic Source Discovery
+# ADR 007: Source Metadata Discovery
 
 ## Status
 
-**Accepted** - Implemented on 2025-11-19
+**Accepted** - Implemented on 2025-11-19, renamed in v1.4.0
 
 ## Context
 
@@ -54,7 +54,7 @@ _sourceName="2025/11/19/[$LATEST]680ff80a3c52425186785e119a6be541"
 
 ## Decision
 
-Add a **`discover-sources` command** that finds dynamic source names by analyzing actual log data.
+Add a **`discover-source-metadata` command** that finds source metadata by analyzing actual log data.
 
 **Key Design Decisions:**
 
@@ -64,7 +64,7 @@ Add a **`discover-sources` command** that finds dynamic source names by analyzin
 client.list_all_sources
 
 # Instead this (finds actual runtime sources):
-client.discover_dynamic_sources(from_time: '-24h', to_time: 'now')
+client.discover_source_metadata(from_time: '-24h', to_time: 'now')
 ```
 
 **Why:** Dynamic source names only exist in log messages, not in collector configuration.
@@ -101,13 +101,13 @@ Results sorted by `message_count` descending.
 ### 5. Simple CLI Interface
 ```bash
 # Simple - no complex options
-sumo-query discover-sources
+sumo-query discover-source-metadata
 
 # Filter to specific category
-sumo-query discover-sources --filter '_sourceCategory=*ecs*'
+sumo-query discover-source-metadata --filter '_sourceCategory=*ecs*'
 
 # Different time range
-sumo-query discover-sources --from '-7d' --to 'now'
+sumo-query discover-source-metadata --from '-7d' --to 'now'
 ```
 
 **Why:**
@@ -167,7 +167,7 @@ sumo-query discover-sources --from '-7d' --to 'now'
 
 ➡️ **Separate from Static Sources**
 - `list-sources` returns static configuration
-- `discover-sources` returns runtime sources
+- `discover-source-metadata` returns runtime source metadata
 - Different formats, different purposes
 
 **Trade-off**: This separation is correct - they serve different needs. Static = infrastructure, Dynamic = runtime reality.
@@ -176,12 +176,12 @@ sumo-query discover-sources --from '-7d' --to 'now'
 
 ### New Command
 ```bash
-sumo-query discover-sources [OPTIONS]
+sumo-query discover-source-metadata [OPTIONS]
 ```
 
 ### New API Method
 ```ruby
-client.discover_dynamic_sources(
+client.discover_source_metadata(
   from_time: '-24h',
   to_time: 'now',
   time_zone: 'UTC',
@@ -214,9 +214,9 @@ client.discover_dynamic_sources(
 Created new classes for separation of concerns:
 
 1. **`RecordFetcher`** - Fetches aggregation results from `/records` endpoint
-2. **`DynamicSourceDiscovery`** - Business logic for source discovery
-3. **`DiscoverSourcesCommand`** - CLI command handler
-4. **`DynamicSourceModel`** - Value object for discovered sources
+2. **`SourceMetadataDiscovery`** - Business logic for source discovery
+3. **`DiscoverSourceMetadataCommand`** - CLI command handler
+4. **`SourceMetadata`** - Value object for discovered sources
 
 **Why separate RecordFetcher?**
 - Sumo Logic has separate endpoints: `/messages` vs `/records`
@@ -273,7 +273,7 @@ Request Sumo Logic to add dynamic sources to Collectors API.
 ### 1. Query Building
 ```bash
 # Discover what sources exist
-sumo-query discover-sources --filter '_sourceCategory=production/*'
+sumo-query discover-source-metadata --filter '_sourceCategory=production/*'
 
 # Build targeted query
 sumo-query search -q '_sourceName="service/web/abc123" error'
@@ -282,7 +282,7 @@ sumo-query search -q '_sourceName="service/web/abc123" error'
 ### 2. Infrastructure Auditing
 ```bash
 # What ECS tasks ran in the last week?
-sumo-query discover-sources --filter '_sourceCategory=*ecs*' -f '-7d'
+sumo-query discover-source-metadata --filter '_sourceCategory=*ecs*' -f '-7d'
 
 # Which are most active?
 # (Already sorted by message_count)
@@ -291,16 +291,16 @@ sumo-query discover-sources --filter '_sourceCategory=*ecs*' -f '-7d'
 ### 3. Debugging Missing Logs
 ```bash
 # Is the source even sending logs?
-sumo-query discover-sources --filter '_sourceName=*my-service*'
+sumo-query discover-source-metadata --filter '_sourceName=*my-service*'
 
 # Check time range
-sumo-query discover-sources --filter '_sourceName=*my-service*' -f '-1h'
+sumo-query discover-source-metadata --filter '_sourceName=*my-service*' -f '-1h'
 ```
 
 ### 4. Automation Scripts
 ```ruby
 # Find all Lambda streams and query each
-sources = client.discover_dynamic_sources(
+sources = client.discover_source_metadata(
   filter: '_sourceCategory=lambda/*'
 )
 
@@ -312,7 +312,7 @@ end
 ### 5. Capacity Planning
 ```bash
 # Which sources generate the most logs?
-sumo-query discover-sources -o sources.json
+sumo-query discover-source-metadata -o sources.json
 
 # Analyze message_count field
 jq '.sources | sort_by(.message_count) | reverse | .[0:10]' sources.json
@@ -362,7 +362,7 @@ Potential improvements (not implemented yet):
 
 ## Notes
 
-This command fills a critical gap in the Sumo Logic tooling ecosystem. While the Collectors API tells you what **should** be sending logs, `discover-sources` tells you what **actually is** sending logs - crucial difference for dynamic AWS environments.
+This command fills a critical gap in the Sumo Logic tooling ecosystem. While the Collectors API tells you what **should** be sending logs, `discover-source-metadata` tells you what **actually is** sending logs - crucial difference for dynamic AWS environments.
 
 **Key Insight**: Configuration ≠ Reality. In modern cloud environments, you need both perspectives.
 

@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'erb'
 require_relative 'base_command'
 require_relative '../../utils/time_parser'
 
@@ -46,6 +47,7 @@ module Sumologic
           end
           warn "Query: #{options[:query]}"
           warn "Limit: #{options[:limit] || 'unlimited'}"
+          warn "Open in Sumo: #{build_search_url}"
           warn '-' * 60
           warn 'Creating search job...'
           $stderr.puts
@@ -96,6 +98,7 @@ module Sumologic
               from_original: @original_from,
               to_original: @original_to,
               time_zone: @parsed_timezone,
+              search_url: build_search_url,
               record_count: results.size,
               records: results
             )
@@ -107,6 +110,7 @@ module Sumologic
               from_original: @original_from,
               to_original: @original_to,
               time_zone: @parsed_timezone,
+              search_url: build_search_url,
               message_count: results.size,
               messages: results
             )
@@ -135,9 +139,19 @@ module Sumologic
             'from' => @parsed_from,
             'to' => @parsed_to,
             'time_zone' => @parsed_timezone,
+            'search_url' => build_search_url,
             'message_count' => results.size,
             'messages' => results
           }
+        end
+
+        def build_search_url
+          from_ms = (Time.parse("#{@parsed_from}Z").to_f * 1000).to_i
+          to_ms = (Time.parse("#{@parsed_to}Z").to_f * 1000).to_i
+          encoded_query = ERB::Util.url_encode(options[:query])
+          base = client.config.web_ui_base_url
+
+          "#{base}/ui/#/search/create?query=#{encoded_query}&startTime=#{from_ms}&endTime=#{to_ms}"
         end
       end
     end

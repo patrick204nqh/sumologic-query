@@ -100,6 +100,50 @@ RSpec.describe Sumologic::Configuration do
     end
   end
 
+  describe '#web_ui_base_url' do
+    it 'returns correct URL for us1' do
+      config = described_class.new
+      config.deployment = 'us1'
+
+      expect(config.web_ui_base_url).to eq('https://service.sumologic.com')
+    end
+
+    it 'returns correct URL for us2' do
+      config = described_class.new
+      config.deployment = 'us2'
+
+      expect(config.web_ui_base_url).to eq('https://service.us2.sumologic.com')
+    end
+
+    it 'returns correct URL for eu' do
+      config = described_class.new
+      config.deployment = 'eu'
+
+      expect(config.web_ui_base_url).to eq('https://service.eu.sumologic.com')
+    end
+
+    it 'returns correct URL for au' do
+      config = described_class.new
+      config.deployment = 'au'
+
+      expect(config.web_ui_base_url).to eq('https://service.au.sumologic.com')
+    end
+
+    it 'handles custom deployment codes' do
+      config = described_class.new
+      config.deployment = 'custom'
+
+      expect(config.web_ui_base_url).to eq('https://service.custom.sumologic.com')
+    end
+
+    it 'converts full API URL to service URL' do
+      config = described_class.new
+      config.deployment = 'https://api.us2.sumologic.com/api/v1'
+
+      expect(config.web_ui_base_url).to eq('https://service.us2.sumologic.com')
+    end
+  end
+
   describe '#validate!' do
     it 'raises AuthenticationError for missing access_id' do
       config = described_class.new

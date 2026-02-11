@@ -45,12 +45,33 @@ module Sumologic
       @base_url_v2 ||= build_base_url('v2')
     end
 
+    def web_ui_base_url
+      @web_ui_base_url ||= build_web_ui_base_url
+    end
+
     def validate!
       raise AuthenticationError, 'SUMO_ACCESS_ID not set' unless @access_id
       raise AuthenticationError, 'SUMO_ACCESS_KEY not set' unless @access_key
     end
 
     private
+
+    def build_web_ui_base_url
+      case @deployment
+      when /^http/
+        @deployment.sub('api.', 'service.').sub(%r{/api/v\d+.*}, '')
+      when 'us1'
+        'https://service.sumologic.com'
+      when 'us2'
+        'https://service.us2.sumologic.com'
+      when 'eu'
+        'https://service.eu.sumologic.com'
+      when 'au'
+        'https://service.au.sumologic.com'
+      else
+        "https://service.#{@deployment}.sumologic.com"
+      end
+    end
 
     def build_base_url(version = API_VERSION)
       case @deployment

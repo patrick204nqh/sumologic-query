@@ -4,6 +4,20 @@ RSpec.describe 'CLI Commands' do
   let(:client) { instance_double(Sumologic::Client) }
   let(:options) { { output: nil } }
 
+  def capture_stdout_stderr(command)
+    stdout = StringIO.new
+    stderr = StringIO.new
+    original_stdout = $stdout
+    original_stderr = $stderr
+    $stdout = stdout
+    $stderr = stderr
+    command.execute
+    { stdout: stdout.string, stderr: stderr.string }
+  ensure
+    $stdout = original_stdout
+    $stderr = original_stderr
+  end
+
   # ============================================================
   # Simple list commands
   # ============================================================
@@ -176,6 +190,83 @@ RSpec.describe 'CLI Commands' do
 
       command = described_class.new(options.merge(path: '/Library/Users/me/Search'), client)
       expect { command.execute }.to output(/"Search"/).to_stdout
+    end
+  end
+
+  # ============================================================
+  # Search command
+  # ============================================================
+
+  describe Sumologic::CLI::Commands::SearchCommand do
+    let(:config) { instance_double(Sumologic::Configuration, web_ui_base_url: 'https://service.us2.sumologic.com') }
+    let(:search_options) do
+      {
+        output: nil,
+        query: '_sourceCategory=prod error',
+        from: '2024-01-01T00:00:00Z',
+        to: '2024-01-02T00:00:00Z',
+        time_zone: 'UTC',
+        limit: 100,
+        aggregate: false,
+        interactive: false
+      }
+    end
+
+    before do
+      allow(client).to receive(:config).and_return(config)
+    end
+
+    it 'includes search_url in JSON output for message queries' do
+      allow(client).to receive(:search).and_return([{ '_raw' => 'log line' }])
+
+      command = described_class.new(search_options, client)
+      output = capture_stdout_stderr(command)
+
+      parsed = JSON.parse(output[:stdout])
+      expect(parsed).to have_key('search_url')
+      expect(parsed['search_url']).to include('service.us2.sumologic.com')
+      expect(parsed['search_url']).to include('startTime=')
+      expect(parsed['search_url']).to include('endTime=')
+      expect(parsed['search_url']).to include('query=')
+    end
+
+    it 'includes search_url in JSON output for aggregate queries' do
+      agg_options = search_options.merge(query: '_sourceCategory=prod | count by _sourceHost', aggregate: true)
+      allow(client).to receive(:search_aggregation).and_return([{ '_count' => '5' }])
+
+      command = described_class.new(agg_options, client)
+      output = capture_stdout_stderr(command)
+
+      parsed = JSON.parse(output[:stdout])
+      expect(parsed).to have_key('search_url')
+      expect(parsed['search_url']).to include('service.us2.sumologic.com')
+    end
+
+    it 'prints search URL in stderr summary' do
+      allow(client).to receive(:search).and_return([])
+
+      command = described_class.new(search_options, client)
+      output = capture_stdout_stderr(command)
+
+      expect(output[:stderr]).to include('Open in Sumo:')
+      expect(output[:stderr]).to include('service.us2.sumologic.com')
+    end
+
+    it 'encodes query and uses epoch-ms timestamps in URL' do
+      allow(client).to receive(:search).and_return([])
+
+      command = described_class.new(search_options, client)
+      output = capture_stdout_stderr(command)
+
+      parsed = JSON.parse(output[:stdout])
+      url = parsed['search_url']
+
+      # 2024-01-01T00:00:00Z = 1704067200000 ms
+      expect(url).to include('startTime=1704067200000')
+      # 2024-01-02T00:00:00Z = 1704153600000 ms
+      expect(url).to include('endTime=1704153600000')
+      # query should be URL-encoded (spaces become %20, pipes become %7C)
+      expect(url).not_to include(' ')
     end
   end
 

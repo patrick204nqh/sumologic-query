@@ -214,5 +214,5 @@ Install FZF using the commands above.
 
 ## See Also
 
-- [Query Examples](queries.md) - More query patterns
+- [Query Examples](../../../examples/queries.md) - More query patterns
 - [FZF Documentation](https://github.com/junegunn/fzf) - Learn more FZF features

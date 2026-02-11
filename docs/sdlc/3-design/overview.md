@@ -15,7 +15,7 @@ lib/sumologic/
 ├── search/               # Search operations (4 components)
 ├── metadata/             # Metadata operations (6 components)
 ├── interactive/          # FZF-based browser (6 components)
-├── cli/commands/         # Command handlers (5 commands)
+├── cli/commands/         # Command handlers (16 commands)
 └── utils/                # Utilities (2 components)
 ```
 
@@ -55,6 +55,27 @@ GET /collectors → Parallel Fetch (10 workers) → GET /collectors/:id/sources
 - **Interactive mode**: JSONL format, handles 100k+ messages efficiently
 - **Flexible time parsing**: Relative (`-1h`), ISO 8601, Unix timestamps, timezones
 - **Deployment aware**: Auto-configures API URLs for us1, us2, eu, au regions
+
+## API Versions (v1 vs v2)
+
+The Sumo Logic API has two base URLs. The client initializes both as `@http` (v1) and `@http_v2` (v2):
+
+| API version | Base path | Resources |
+|-------------|-----------|-----------|
+| **v1** (`@http`) | `/api/v1` | Search, Collectors, Sources, Monitors, Health Events, Fields, Lookup Tables, Apps |
+| **v2** (`@http_v2`) | `/api/v2` | Dashboards, Folders, Content (path lookup + export) |
+
+When adding a new metadata class, check which base URL the Sumo Logic endpoint uses and pass the corresponding HTTP client:
+
+```ruby
+# v1 example
+@app = Metadata::App.new(http_client: @http)
+
+# v2 example
+@dashboard = Metadata::Dashboard.new(http_client: @http_v2)
+```
+
+See `lib/sumologic/client.rb` for the full initialization.
 
 ## Design Decisions
 

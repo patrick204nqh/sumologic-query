@@ -166,15 +166,15 @@ jobs:
         run: |
           version="${{ needs.check-version.outputs.current_version }}"
           date=$(date +%Y-%m-%d)
-          changelog="${{ steps.notes.outputs.changelog }}"
 
           # Get previous version for compare link
           prev_version=$(git describe --tags --abbrev=0 2>/dev/null | sed 's/v//' || echo "0.0.0")
 
-          # Create new entry with changelog content
+          # Create new entry — read changelog from file written by previous step
+          # to avoid shell quoting issues with special characters in commit messages
           echo "## [$version](https://github.com/patrick204nqh/sumologic-query/compare/v$prev_version...v$version) ($date)" > /tmp/new_entry.md
           echo "" >> /tmp/new_entry.md
-          echo "$changelog" >> /tmp/new_entry.md
+          cat /tmp/release_notes.md >> /tmp/new_entry.md
           echo "" >> /tmp/new_entry.md
 
           # Prepend to CHANGELOG.md (after the header)

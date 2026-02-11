@@ -6,6 +6,37 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and release notes are automatically generated from commit messages.
+## [1.4.0](https://github.com/patrick204nqh/sumologic-query/compare/v1.3.5...v1.4.0) (2026-02-11)
+
+### 🎉 New Features
+
+- add comprehensive skills documentation for Sumo Logic CLI commands
+- add export-content command with async job handling
+- add get-content command for path-based content lookup
+- add get-lookup and list-apps commands
+- add list-health-events and list-fields commands
+- migrate monitors to search API with status/query filters
+- add support for retrieving monitors and dashboards in the CLI, refactor monitor collection logic for improved readability
+- Enhance Sumo Logic CLI with monitors, folders, and dashboards commands
+- implement aggregation queries and enhance error handling for rate limits
+
+### 🐛 Bug Fixes
+
+- migrate dashboards from v1 to v2 API
+
+### 🔧 Refactoring
+
+- clean design for AI agent readiness (v1.4.0)
+
+### 📚 Documentation
+
+- update naming conventions to match actual codebase
+- reorganize into SDLC structure
+- clarify discover-sources as search-based technique
+- revise architecture overview with enhanced clarity on design philosophy, component structure, and key features
+
+
+
 ## [1.3.5](https://github.com/patrick204nqh/sumologic-query/compare/v1.3.4...v1.3.5) (2025-11-19)
 
 ### 🎉 New Features

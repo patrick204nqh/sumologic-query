@@ -203,6 +203,83 @@ Before implementing:
 4. **Write tests** - maintain coverage
 5. **Update docs** - README and relevant docs
 
+## Adding a CLI Command
+
+Most contributions add a new CLI command. Every command touches these files in order:
+
+### 1. Metadata class — `lib/sumologic/metadata/<resource>.rb`
+
+Handles the raw API call. Use `@http` for v1 endpoints or `@http_v2` for v2 (Content Library, Dashboards, Folders).
+
+```ruby
+# frozen_string_literal: true
+
+require_relative 'loggable'
+
+module Sumologic
+  module Metadata
+    class Widget
+      include Loggable
+
+      def initialize(http_client:)
+        @http = http_client          # or http_v2 for v2 API
+      end
+
+      def list
+        data = @http.request(method: :get, path: '/widgets')
+        data['widgets'] || []
+      rescue StandardError => e
+        raise Error, "Failed to list widgets: #{e.message}"
+      end
+    end
+  end
+end
+```
+
+### 2. Command class — `lib/sumologic/cli/commands/<command>_command.rb`
+
+Calls the client facade and outputs JSON.
+
+```ruby
+# frozen_string_literal: true
+
+require_relative 'base_command'
+
+module Sumologic
+  class CLI < Thor
+    module Commands
+      class ListWidgetsCommand < BaseCommand
+        def execute
+          warn 'Fetching widgets...'
+          widgets = client.list_widgets
+          output_json(total: widgets.size, widgets: widgets)
+        end
+      end
+    end
+  end
+end
+```
+
+### 3. Register in `lib/sumologic/cli.rb`
+
+Add `require_relative` at the top, then a Thor command method that delegates to the command class.
+
+### 4. Facade method in `lib/sumologic/client.rb`
+
+Initialize the metadata class in `#initialize` and add a public method that delegates to it.
+
+### 5. Require in `lib/sumologic.rb`
+
+Add `require_relative 'sumologic/metadata/<resource>'` in the metadata section.
+
+### 6. Tests
+
+Add these specs:
+
+- `spec/sumologic/metadata/<resource>_spec.rb` — API calls, error handling
+- `spec/sumologic/cli/commands/commands_spec.rb` — add a test for the new command
+- `spec/sumologic/client_spec.rb` — add `respond_to` expectation
+
 ## Documentation
 
 When adding features, update:

@@ -1,81 +1,73 @@
 ---
-description: Show Sumo Logic health dashboard — monitors, events, collectors
+name: health
+description: Show Sumo Logic health dashboard — monitors in alert, health events, and collector status. Use when a user wants to check system health, see what's alerting, or get an overall status overview.
 argument-hint: [optional: critical | warning | collectors | all]
 ---
 
-You are a Sumo Logic health monitoring assistant. You check monitors, health events, and collector status to present a unified health dashboard.
+# Health Dashboard
 
-## Prerequisite
+Check monitors, health events, and collector status to present a unified health dashboard. All results are saved to `.sumo-query/health-checks/` for review and trend comparison.
 
-Verify the CLI is installed:
+**Prerequisite:** Verify `sumo-query version` works. If not: `gem install sumologic-query`
 
-```bash
-sumo-query version
-```
-
-If the command fails, tell the user: `gem install sumologic-query`
+**CLI reference:** For command flags, read `references/cli-reference.md`.
 
 ## Input
 
 The user asked for: **$ARGUMENTS**
 
-If `$ARGUMENTS` is empty, default to a full health check (same as `all`).
+If `$ARGUMENTS` is empty, default to `all`.
 
-Supported filters:
-- `critical` — Only critical monitors and events
-- `warning` — Warning and critical monitors
-- `collectors` — Collector and source health only
-- `all` (default) — Everything
+Supported filters: `critical`, `warning`, `collectors`, `all` (default)
+
+## Artifacts
+
+Initialize the artifact directory at the start:
+
+```bash
+ARTIFACT_DIR=$(bash scripts/init-artifacts.sh health-checks)
+```
+
+For **every** `sumo-query` command, save output with `-o` and append to `queries.sh`. Use descriptive filenames: `monitors-critical.json`, `monitors-warning.json`, `monitors-missing-data.json`, `health-events.json`, `collectors.json`.
 
 ## Workflow
 
 ### Phase 1: Monitor Status
 
-Check for monitors in alert states. Run these commands in parallel:
+Run in parallel:
 
 ```bash
-sumo-query list-monitors -s Critical -l 50
+sumo-query list-monitors -s Critical -l 50 -o "$ARTIFACT_DIR/monitors-critical.json"
+sumo-query list-monitors -s Warning -l 50 -o "$ARTIFACT_DIR/monitors-warning.json"
+sumo-query list-monitors -s MissingData -l 50 -o "$ARTIFACT_DIR/monitors-missing-data.json"
 ```
 
-```bash
-sumo-query list-monitors -s Warning -l 50
-```
-
-```bash
-sumo-query list-monitors -s MissingData -l 50
-```
-
-If `$ARGUMENTS` is `critical`, skip the Warning and MissingData checks.
+If `$ARGUMENTS` is `critical`, skip Warning and MissingData.
 
 ### Phase 2: Health Events
 
-Check recent health events:
-
 ```bash
-sumo-query list-health-events -l 50
+sumo-query list-health-events -l 50 -o "$ARTIFACT_DIR/health-events.json"
 ```
 
 ### Phase 3: Collector Status
 
-If `$ARGUMENTS` is `all` or `collectors`, check collector status:
+If `$ARGUMENTS` is `all` or `collectors`:
 
 ```bash
-sumo-query list-collectors
+sumo-query list-collectors -o "$ARTIFACT_DIR/collectors.json"
 ```
 
 ### Phase 4: Present Dashboard
-
-Format the results as a health dashboard. Use this structure:
 
 ```
 ## Health Dashboard
 
 ### Overall Status: [HEALTHY | DEGRADED | CRITICAL]
 
-Determine overall status:
 - CRITICAL: Any monitor in Critical state or critical health events
-- DEGRADED: Monitors in Warning/MissingData state or non-critical health events
-- HEALTHY: All monitors Normal, no health events
+- DEGRADED: Monitors in Warning/MissingData or non-critical health events
+- HEALTHY: All Normal, no health events
 
 ---
 
@@ -83,7 +75,6 @@ Determine overall status:
 
 #### Critical (N)
 - [Monitor Name] — triggered since [time]
-  Details: [trigger condition summary]
 
 #### Warning (N)
 - [Monitor Name] — triggered since [time]
@@ -96,21 +87,25 @@ Determine overall status:
 
 ### Collectors (N total)
 - [N] alive, [N] dead/degraded
-- Notable: [any collectors with issues]
 ```
 
 ### Phase 5: Recommendations
 
-Based on findings, suggest next steps:
-- For critical monitors: suggest `/sumo-query:investigate <problem>`
-- For missing data: suggest checking the specific collector/source
-- For health events: suggest looking at related logs
-- If everything is healthy: confirm and suggest scheduling periodic checks
+- Critical monitors → suggest `/sumo-query:investigate <problem>`
+- Missing data → suggest checking the specific collector/source
+- Health events → suggest looking at related logs
+- All healthy → confirm and suggest periodic checks
+
+### Finalize Artifacts
+
+Write **`$ARTIFACT_DIR/dashboard.md`** with the formatted dashboard.
+
+Tell the user: `Artifacts saved to: $ARTIFACT_DIR/`
 
 ## Constraints
 
-- **Read-only**: Do not modify monitors, collectors, or any configuration.
-- **Safe defaults**: Always use `--limit` flags.
+- **Read-only**: Never modify monitors, collectors, or configuration.
+- **Safe defaults**: Always use `--limit`.
 - **No interactive mode**: Never use the `-i` flag.
-- Do not write files unless the user explicitly asks.
-- If a command fails (e.g., permission denied), report the error clearly and continue with other checks.
+- **Always save artifacts** to `.sumo-query/health-checks/`.
+- If a command fails, report the error and continue with other checks.

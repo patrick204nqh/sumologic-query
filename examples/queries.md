@@ -65,22 +65,22 @@ Find CloudWatch/ECS/Lambda source names from log data:
 
 ```bash
 # Discover all sources (last 24h)
-sumo-query discover-sources
+sumo-query discover-source-metadata
 
 # Last 7 days
-sumo-query discover-sources -f '-7d'
+sumo-query discover-source-metadata -f '-7d'
 
 # Filter to ECS only
-sumo-query discover-sources --filter '_sourceCategory=*ecs*'
+sumo-query discover-source-metadata --filter '_sourceCategory=*ecs*'
 
 # Filter to Lambda
-sumo-query discover-sources --filter '_sourceCategory=lambda/*'
+sumo-query discover-source-metadata --filter '_sourceCategory=lambda/*'
 
 # Save to file
-sumo-query discover-sources -o sources.json
+sumo-query discover-source-metadata -o sources.json
 
 # With timezone
-sumo-query discover-sources -f '-24h' -z 'Australia/Sydney'
+sumo-query discover-source-metadata -f '-24h' -z 'Australia/Sydney'
 ```
 
 **Output example:**
@@ -109,13 +109,13 @@ sumo-query discover-sources -f '-24h' -z 'Australia/Sydney'
 
 ```bash
 # List collectors
-sumo-query collectors -o collectors.json
+sumo-query list-collectors -o collectors.json
 
 # List static sources
-sumo-query sources -o sources.json
+sumo-query list-sources -o sources.json
 
 # Filter with jq
-sumo-query sources | jq '.data[] | select(.sources[].category | contains("production"))'
+sumo-query list-sources | jq '.data[] | select(.sources[].category | contains("production"))'
 ```
 
 ## Output Options
@@ -152,8 +152,8 @@ results = client.search(
   limit: 1000
 )
 
-# Discover sources
-sources = client.discover_dynamic_sources(
+# Discover source metadata
+sources = client.discover_source_metadata(
   from_time: '-24h',
   to_time: 'now',
   filter: '_sourceCategory=*ecs*'

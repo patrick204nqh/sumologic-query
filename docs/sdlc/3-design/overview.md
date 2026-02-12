@@ -101,7 +101,7 @@ sumo-query search -q 'error' -f '-1h' -t 'now' -i
 Discover dynamic sources:
 
 ```bash
-sumo-query discover-sources --filter '_sourceCategory=*ecs*'
+sumo-query discover-source-metadata --filter '_sourceCategory=*ecs*'
 ```
 
 List infrastructure:
@@ -115,7 +115,7 @@ sumo-query list-sources
 
 - [Architecture Decision Records](decisions/) - Detailed design decisions
 - [ADR 002](decisions/002-radical-simplification.md) - Simplification philosophy
-- [ADR 005](decisions/005-interactive-mode-with-fzf.md) - Interactive mode design
-- [ADR 007](decisions/007-dynamic-source-discovery.md) - Source discovery
-- [Query Examples](../../examples/queries.md) - Query patterns
-- [Rate Limiting](../rate-limiting.md) - Performance tuning
+- [ADR 005](decisions/005-interactive-fzf.md) - Interactive mode design
+- [ADR 007](decisions/007-source-metadata-discovery.md) - Source discovery
+- [Query Examples](../../../examples/queries.md) - Query patterns
+- [Rate Limiting](../4-develop/rate-limiting.md) - Performance tuning

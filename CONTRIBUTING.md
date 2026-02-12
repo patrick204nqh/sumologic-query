@@ -175,13 +175,17 @@ lib/sumologic/
 ├── configuration.rb       # Config management
 ├── client.rb             # Main facade
 ├── cli.rb                # CLI interface
-├── http/                 # HTTP layer
+├── http/                 # HTTP layer (v1 + v2 clients)
 ├── search/               # Search operations
-└── metadata/             # Metadata operations
+├── metadata/             # Metadata operations (6 components)
+├── interactive/          # FZF-based browser (6 modules)
+├── cli/commands/         # Command handlers (16 commands)
+└── utils/                # Utilities
 
 spec/                     # Tests
 examples/queries.md       # Query examples
-docs/                     # Reference docs
+docs/sdlc/               # Architecture, ADRs, guides
+skills/                   # AI skill prompts
 ```
 
 ## Design Principles
@@ -286,9 +290,9 @@ When adding features, update:
 
 - `README.md` - If it affects quick start or main usage
 - `examples/queries.md` - If adding query patterns
-- `docs/api-reference.md` - If changing API
-- `docs/architecture.md` - If changing design
-- `CHANGELOG.md` - Always
+- `docs/sdlc/3-design/overview.md` - If changing architecture
+- `docs/sdlc/3-design/architecture/decisions/` - Add an ADR for significant design choices
+- `README.md` - If adding new commands (Usage section)
 
 Keep docs simple and focused on key concepts.
 

@@ -47,3 +47,6 @@ Thumbs.db
 Formula/
 
 .plans
+
+# Skill artifacts (user-specific query results and evidence)
+.sumo-query/

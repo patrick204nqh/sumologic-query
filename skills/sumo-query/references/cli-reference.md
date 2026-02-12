@@ -1,38 +1,8 @@
----
-description: Sumo Logic CLI reference — commands, query syntax, time formats
-argument-hint: <topic> (commands | query-syntax | time | all)
----
+# Sumo Logic CLI Reference
 
-You are a Sumo Logic CLI reference assistant. The user has access to `sumo-query`, a CLI tool for querying Sumo Logic.
+## CLI Commands
 
-## Prerequisite
-
-Verify the CLI is installed:
-
-```bash
-sumo-query version
-```
-
-If the command fails, tell the user to install it: `gem install sumologic-query`
-
-## Requested Topic
-
-The user asked about: **$ARGUMENTS**
-
-If `$ARGUMENTS` is empty, show a brief table of contents and ask which topic they want:
-
-- `commands` — All CLI commands and flags
-- `query-syntax` — Sumo Logic query language reference
-- `time` — Time format and timezone reference
-- `all` — Everything
-
-Otherwise, show the relevant section(s) below.
-
----
-
-# CLI Commands Reference
-
-## Search
+### Search
 
 ```bash
 # Basic search
@@ -48,7 +18,7 @@ sumo-query search -q '_sourceCategory=prod | count by _sourceHost' -f -1h -t now
 sumo-query search -q 'error' -f -1h -t now -z America/New_York
 ```
 
-### Search Flags
+#### Search Flags
 
 | Flag | Long          | Required | Description                |
 | ---- | ------------- | -------- | -------------------------- |
@@ -61,26 +31,19 @@ sumo-query search -q 'error' -f -1h -t now -z America/New_York
 | `-d` | `--debug`     | No       | Debug output               |
 | `-o` | `--output`    | No       | Write JSON to file         |
 
-## Monitors
+### Monitors
 
 ```bash
-# List all monitors
 sumo-query list-monitors
-
-# Filter by status
 sumo-query list-monitors -s Critical
 sumo-query list-monitors -s Warning
 sumo-query list-monitors -s MissingData
 sumo-query list-monitors -s AllTriggered
-
-# Search by name
 sumo-query list-monitors -q "payment"
-
-# Get specific monitor details
 sumo-query get-monitor --monitor-id 00000000001A2B3C
 ```
 
-### list-monitors Flags
+#### list-monitors Flags
 
 | Flag | Long       | Required | Description                                                            |
 | ---- | ---------- | -------- | ---------------------------------------------------------------------- |
@@ -88,49 +51,36 @@ sumo-query get-monitor --monitor-id 00000000001A2B3C
 | `-q` | `--query`  | No       | Search name/description                                                |
 | `-l` | `--limit`  | No       | Max results (default: 100)                                             |
 
-## Health Events
+### Health Events
 
 ```bash
 sumo-query list-health-events
 sumo-query list-health-events -l 50
 ```
 
-## Collectors & Sources
+### Collectors & Sources
 
 ```bash
-# List all collectors
 sumo-query list-collectors
-
-# Filter collectors by name or category
 sumo-query list-collectors -q "my-service" -l 20
-
-# List sources for a specific collector
 sumo-query list-sources --collector-id 123456789
-
-# List all sources across all collectors
 sumo-query list-sources
-
-# Filter sources by collector name, source name, or category
 sumo-query list-sources --collector "my-service" --name "nginx" -l 20
 sumo-query list-sources --category "production"
-
-# Discover dynamic source metadata from logs
 sumo-query discover-source-metadata
 sumo-query discover-source-metadata --filter '_sourceCategory=*ecs*'
 sumo-query discover-source-metadata -f -7d -t now
-
-# Discover with keyword filter (matches name or category)
 sumo-query discover-source-metadata -k "nginx" -l 20
 ```
 
-### list-collectors Flags
+#### list-collectors Flags
 
 | Flag | Long      | Required | Description                                   |
 | ---- | --------- | -------- | --------------------------------------------- |
 | `-q` | `--query` | No       | Filter by name or category (case-insensitive) |
 | `-l` | `--limit` | No       | Max results to return                         |
 
-### list-sources Flags
+#### list-sources Flags
 
 | Flag | Long             | Required | Description                                  |
 | ---- | ---------------- | -------- | -------------------------------------------- |
@@ -140,7 +90,7 @@ sumo-query discover-source-metadata -k "nginx" -l 20
 |      | `--category`     | No       | Filter by source category (case-insensitive) |
 | `-l` | `--limit`        | No       | Max total sources to return                  |
 
-### discover-source-metadata Flags
+#### discover-source-metadata Flags
 
 | Flag | Long          | Required | Description                                             |
 | ---- | ------------- | -------- | ------------------------------------------------------- |
@@ -151,60 +101,42 @@ sumo-query discover-source-metadata -k "nginx" -l 20
 | `-k` | `--keyword`   | No       | Filter results by keyword (matches name or category)    |
 | `-l` | `--limit`     | No       | Max sources to return                                   |
 
-## Dashboards & Folders
+### Dashboards & Folders
 
 ```bash
-# List dashboards
 sumo-query list-dashboards -l 50
-
-# Get dashboard details
 sumo-query get-dashboard --dashboard-id 8mXYZ123abc
-
-# List personal folder
 sumo-query list-folders
-
-# List specific folder
 sumo-query list-folders --folder-id 00000000001A2B3C
-
-# Recursive tree view
 sumo-query list-folders --tree --depth 5
 ```
 
-## Fields
+### Fields
 
 ```bash
-# Custom fields
 sumo-query list-fields
-
-# Built-in fields
 sumo-query list-fields --builtin
 ```
 
-## Content Library
+### Content Library
 
 ```bash
-# Look up content by path
 sumo-query get-content -p "/Library/Users/me/My Saved Search"
-
-# Export content as JSON
 sumo-query export-content --content-id 00000000001A2B3C
 ```
 
-## Apps & Lookup Tables
+### Apps & Lookup Tables
 
 ```bash
-# List available apps
 sumo-query list-apps
-
-# Get lookup table details
 sumo-query get-lookup --lookup-id 00000000001A2B3C
 ```
 
 ---
 
-# Time Format Reference
+## Time Format Reference
 
-## Relative Times
+### Relative Times
 
 | Format   | Meaning               |
 | -------- | --------------------- |
@@ -221,14 +153,14 @@ sumo-query get-lookup --lookup-id 00000000001A2B3C
 
 Compound expressions (e.g., `-1h30m`, `-2d3h15m`) are supported.
 
-## Absolute Times
+### Absolute Times
 
 | Format         | Example               |
 | -------------- | --------------------- |
 | ISO 8601       | `2025-01-15T14:00:00` |
 | Unix timestamp | `1700000000`          |
 
-## Timezones
+### Timezones
 
 | Value              | Description             |
 | ------------------ | ----------------------- |
@@ -241,17 +173,15 @@ Compound expressions (e.g., `-1h30m`, `-2d3h15m`) are supported.
 
 ---
 
-# Sumo Logic Query Syntax Reference
+## Sumo Logic Query Syntax
 
-## Basic Structure
+### Basic Structure
 
 ```
 <scope> | <operator1> | <operator2> | ...
 ```
 
-The scope selects which logs to search. Operators filter, parse, and transform.
-
-## Scope (Where Clause)
+### Scope
 
 ```
 _sourceCategory=prod/api
@@ -264,11 +194,10 @@ Combine with `AND`, `OR`, `NOT`:
 
 ```
 _sourceCategory=prod AND error
-_sourceCategory=prod NOT "health check"
 (_sourceCategory=api OR _sourceCategory=web) AND status=500
 ```
 
-## Keyword Search
+### Keywords
 
 ```
 error
@@ -277,165 +206,82 @@ error OR warning
 error NOT "expected error"
 ```
 
-## Parse Operators
-
-### parse (anchor-based)
+### Parse Operators
 
 ```
 | parse "status=* method=* path=*" as status, method, path
-```
-
-### parse regex
-
-```
 | parse regex "(?<ip>\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"
-| parse regex "status=(?<status>\d+)"
-```
-
-### json
-
-```
 | json "response.status" as status
-| json "user.name" as username
 | json auto
-```
-
-### csv / keyvalue / xml
-
-```
 | csv _raw extract 1 as ip, 2 as method, 3 as url
 | keyvalue infer "=" ","
-| xml "/root/element" as value
 ```
 
-## Filter Operators
-
-### where
+### Filter Operators
 
 ```
 | where status >= 400
-| where status = 200
-| where !(user = "bot")
 | where method in ("GET", "POST")
-| where isNull(error_code)
-| where !isNull(response_time)
-| where response_time > 5000
-```
-
-### Comparison operators
-
-`=`, `!=`, `>`, `>=`, `<`, `<=`, `in`, `matches`
-
-### String matching
-
-```
-| where method matches "GET*"
 | where url matches "*api/v2*"
-| where toLowerCase(message) matches "*error*"
+| where !isNull(response_time)
 ```
 
-## Aggregation Operators
+Comparison: `=`, `!=`, `>`, `>=`, `<`, `<=`, `in`, `matches`
 
-### count
-
-```
-| count                          # total count
-| count by _sourceCategory       # count per category
-| count by status, method        # count by multiple fields
-| count as request_count by path # named count
-```
-
-### Statistical
+### Aggregation
 
 ```
+| count by _sourceCategory
 | avg(response_time) by endpoint
 | sum(bytes) by _sourceHost
-| min(latency) as min_latency, max(latency) as max_latency by service
 | pct(response_time, 95) as p95 by endpoint
-| pct(response_time, 50) as p50, pct(response_time, 99) as p99
-```
-
-### first / last
-
-```
+| min(latency) as min_lat, max(latency) as max_lat by service
+| count_distinct(user)
 | first(_raw) by _sourceHost
-| last(message) by user
 ```
 
-## Sort and Limit
+### Time Bucketing
+
+```
+| timeslice 1m | count by _timeslice
+| timeslice 5m | avg(response_time) by _timeslice
+```
+
+### Sort and Limit
 
 ```
 | sort by _count desc
-| sort by response_time asc
-| limit 20
 | top 10 _sourceCategory by _count
+| limit 20
 ```
 
-## Time Operations
-
-### timeslice
-
-```
-| timeslice 1m                    # group by 1-minute buckets
-| timeslice 5m                    # 5-minute buckets
-| timeslice 1h                    # hourly buckets
-| count by _timeslice             # count per time bucket
-```
-
-### formatDate
-
-```
-| formatDate(_messageTime, "yyyy-MM-dd HH:mm:ss") as timestamp
-```
-
-## String Functions
-
-```
-| toLowerCase(field)
-| toUpperCase(field)
-| substring(field, 0, 10)
-| concat(field1, " - ", field2) as combined
-| replace(field, "old", "new") as replaced
-| length(field) as field_length
-| trim(field)
-```
-
-## Numeric Functions
-
-```
-| num(status) as status_num
-| abs(value)
-| ceil(value)
-| floor(value)
-| round(value, 2)
-```
-
-## Conditional
+### Conditional
 
 ```
 | if(status >= 400, "error", "ok") as status_class
 | if(isNull(user), "anonymous", user) as display_user
 ```
 
-## Dedup
+### Dedup
 
 ```
-| dedup by _sourceHost           # keep first occurrence per host
-| dedup 3 by user                # keep up to 3 per user
+| dedup by _sourceHost
+| dedup 3 by user
 ```
 
-## Transpose
+### String / Numeric Functions
 
 ```
-| count by status | transpose row _count column status
+| toLowerCase(field) | toUpperCase(field) | substring(field, 0, 10)
+| concat(field1, " - ", field2) as combined | length(field) as len
+| num(status) as status_num | round(value, 2)
 ```
 
 ---
 
-# Common Query Patterns
+## Common Query Patterns
 
-## Error Rate
-
+**Error rate:**
 ```
 _sourceCategory=prod
 | if(status >= 400, 1, 0) as is_error
@@ -443,54 +289,33 @@ _sourceCategory=prod
 | sort by error_rate desc
 ```
 
-## Top Errors
-
+**Top errors:**
 ```
 _sourceCategory=prod error
 | parse "error: *" as error_msg
-| count by error_msg
-| sort by _count desc
-| limit 10
+| count by error_msg | sort by _count desc | limit 10
 ```
 
-## Latency Percentiles
-
+**Latency percentiles:**
 ```
 _sourceCategory=prod/api
 | json "response_time" as rt
 | pct(rt, 50) as p50, pct(rt, 95) as p95, pct(rt, 99) as p99 by endpoint
-| sort by p99 desc
 ```
 
-## Traffic Over Time
-
+**Traffic over time:**
 ```
-_sourceCategory=prod
-| timeslice 5m
-| count by _timeslice
+_sourceCategory=prod | timeslice 5m | count by _timeslice
 ```
 
-## Status Code Breakdown
-
+**Status code breakdown:**
 ```
 _sourceCategory=prod
-| parse "status=*" as status
-| count by status
-| sort by _count desc
+| parse "status=*" as status | count by status | sort by _count desc
 ```
 
-## Slow Requests
-
+**Slow requests:**
 ```
 _sourceCategory=prod/api
-| json "response_time" as rt
-| where rt > 3000
-| sort by rt desc
-| limit 20
+| json "response_time" as rt | where rt > 3000 | sort by rt desc | limit 20
 ```
-
-## Constraints
-
-- This is a **read-only** reference. Do not modify any files unless the user explicitly asks.
-- Always verify `sumo-query` is accessible before running commands.
-- Use `--limit` on search commands to avoid excessive output.

@@ -1,25 +1,22 @@
 ---
-description: Investigate incidents using Sumo Logic — monitors, logs, root cause analysis
+name: investigate
+description: Investigate incidents using Sumo Logic — check monitors, search logs, drill down into patterns, and present a structured incident report with saved evidence artifacts. Use when a user reports a production problem, error spike, latency issue, or wants root cause analysis.
 argument-hint: <problem description> e.g. "API errors spiking in production"
 ---
 
-You are a Sumo Logic incident investigator. You systematically investigate problems by checking monitors, searching logs, drilling down into patterns, and presenting a structured incident report.
+# Incident Investigation
 
-## Prerequisite
+Systematically investigate problems by checking monitors, searching logs, and presenting a structured incident report. All evidence is saved to `.sumo-query/investigations/` for review and replay.
 
-Verify the CLI is installed:
+**Prerequisite:** Verify `sumo-query version` works. If not: `gem install sumologic-query`
 
-```bash
-sumo-query version
-```
-
-If the command fails, tell the user: `gem install sumologic-query`
+**CLI reference:** For command flags and query syntax, read `references/cli-reference.md`.
 
 ## Input
 
 The user wants to investigate: **$ARGUMENTS**
 
-If `$ARGUMENTS` is empty, show this usage guide and stop:
+If `$ARGUMENTS` is empty, show usage and stop:
 
 > **Usage:** `/sumo-query:investigate <problem description>`
 >
@@ -27,232 +24,135 @@ If `$ARGUMENTS` is empty, show this usage guide and stop:
 > - `/sumo-query:investigate API latency spike in production`
 > - `/sumo-query:investigate payment service returning 500 errors`
 > - `/sumo-query:investigate data ingestion stopped from AWS collectors`
-> - `/sumo-query:investigate high error rate on checkout endpoint since 2pm`
-> - `/sumo-query:investigate why the login page is slow`
 
-## Investigation Workflow
+## Artifacts
+
+Initialize the artifact directory at the start:
+
+```bash
+ARTIFACT_DIR=$(bash scripts/init-artifacts.sh investigations "$ARGUMENTS")
+mkdir -p "$ARTIFACT_DIR/evidence"
+```
+
+For **every** `sumo-query` command:
+
+1. Save output with `-o "$ARTIFACT_DIR/evidence/NN-description.json"`
+2. Append the command to `$ARTIFACT_DIR/queries.sh` with a phase comment
+
+Use sequential numbering: `01-monitors-critical.json`, `02-search-initial.json`, etc.
+
+## Workflow
 
 ### Phase 1: Parse the Problem
 
 Extract from `$ARGUMENTS`:
-- **Symptoms**: What is happening? (errors, latency, downtime, missing data, etc.)
-- **Affected service/source**: Which system? (derive `_sourceCategory`, `_sourceHost`, or keywords)
-- **Time window**: When did it start? (default: `-1h` to `now` if not specified)
-- **Severity indicators**: Any hints about impact level
+- **Symptoms**: errors, latency, downtime, missing data
+- **Affected service**: derive `_sourceCategory`, `_sourceHost`, or keywords
+- **Time window**: default `-1h` to `now` if not specified
 
-Tell the user your understanding before proceeding:
-
-```
-Investigating: <summary>
-Scope:         <source/service>
-Time window:   <from> to <to>
-```
+Tell the user your understanding before proceeding.
 
 ### Phase 2: Discover Log Sources
 
-Before running queries, identify the correct source categories for the service.
-This avoids wasting search queries on trial-and-error source discovery.
-
-**If the source category is already known** (user provided it, or it's obvious), skip this phase.
-
-**If the source is unknown**, run a discovery query:
+**Skip** if source category is already known.
 
 ```bash
 sumo-query search \
-  -q '<service keyword> | count by _sourceCategory, _sourceName | sort by _count desc' \
-  -f '-1h' -t 'now' -a -l 30
+  -q '<keyword> | count by _sourceCategory, _sourceName | sort by _count desc' \
+  -f '-1h' -t 'now' -a -l 30 -o "$ARTIFACT_DIR/evidence/01-source-discovery.json"
 ```
 
-Or use the discovery command with keyword filtering:
+Or use: `sumo-query discover-source-metadata -k "<keyword>" -l 20`
 
-```bash
-sumo-query discover-source-metadata -k "<service keyword>" -l 20
-```
-
-Or filter collectors/sources directly:
-
-```bash
-sumo-query list-collectors -q "<service keyword>"
-sumo-query list-sources --collector "<service keyword>"
-```
-
-**Evaluate the results:**
-- Prefer sources with high message counts (active)
-- Ignore sources with zero or very low counts (stale)
-- Note the exact `_sourceCategory` values for use in subsequent queries
-
-Tell the user what sources were found:
-
-```
-Found sources:
-- _sourceCategory=production/my-app (1.2M msgs) — Active
-- _sourceCategory=production/my-app-legacy (0 msgs) — Stale, skipping
-Using: _sourceCategory=production/my-app
-```
+Tell the user which sources were found and which you'll use.
 
 ### Phase 3: Check Monitors & Health
 
-Run these in parallel to get the current alert landscape:
+Run in parallel:
 
 ```bash
-sumo-query list-monitors -s Critical -l 20
+sumo-query list-monitors -s Critical -l 20 -o "$ARTIFACT_DIR/evidence/02-monitors-critical.json"
+sumo-query list-monitors -s Warning -l 20 -o "$ARTIFACT_DIR/evidence/03-monitors-warning.json"
+sumo-query list-health-events -l 30 -o "$ARTIFACT_DIR/evidence/04-health-events.json"
 ```
-
-```bash
-sumo-query list-monitors -s Warning -l 20
-```
-
-```bash
-sumo-query list-health-events -l 30
-```
-
-If the problem description mentions a specific service, also search monitors by name:
-
-```bash
-sumo-query list-monitors -q "<service keyword>" -l 20
-```
-
-**Analyze**: Are there active alerts related to the reported problem? Note any correlated monitors.
 
 ### Phase 4: Initial Log Search
 
-Based on the problem description, construct a targeted search:
+Construct a targeted search using the discovered source category:
 
 ```bash
-sumo-query search \
-  -q '<scope> <error keywords>' \
-  -f <from> \
-  -t <to> \
-  -l 30
+sumo-query search -q '<scope> <error keywords>' -f <from> -t <to> -l 30 \
+  -o "$ARTIFACT_DIR/evidence/05-search-initial.json"
 ```
-
-**Guidelines for query construction:**
-- Use the `_sourceCategory` discovered in Phase 2 for precise scoping
-- Start broad, then narrow down
-- Use keywords from the problem description
-- Include status codes, error messages, exception names as appropriate
-
-**Analyze the results**: Look for patterns, error messages, stack traces, and timestamps.
 
 ### Phase 5: Aggregate & Drill Down
 
-Based on Phase 3 findings, run aggregation queries to quantify the problem:
-
-**Error count over time:**
-```bash
-sumo-query search \
-  -q '<scope> error | timeslice 5m | count by _timeslice' \
-  -f <from> -t <to> -a -l 100
-```
-
-**Error breakdown by type/source:**
-```bash
-sumo-query search \
-  -q '<scope> error | count by _sourceHost' \
-  -f <from> -t <to> -a -l 50
-```
-
-**Top error messages:**
-```bash
-sumo-query search \
-  -q '<scope> error | parse "* Error: *" as level, msg | count by msg | sort by _count desc' \
-  -f <from> -t <to> -a -l 20
-```
-
-Choose the aggregation queries that make sense for the specific problem. You may run multiple queries in parallel.
+Run aggregation queries to quantify the problem — error count over time, breakdown by type/source, top error messages. Add `-a` flag for aggregations.
 
 ### Phase 6: Correlate
 
-Look for correlation across services or time:
-
-- If errors spike at a specific time, search other sources around that time
-- If one host shows more errors, compare with healthy hosts
-- Check if the issue correlates with deployment events, config changes, or upstream dependencies
-
-```bash
-sumo-query search \
-  -q '<related scope> | timeslice 5m | count by _timeslice' \
-  -f <from> -t <to> -a -l 100
-```
+Look for correlation across services or time. Compare error hosts with healthy hosts.
 
 ### Phase 7: Present Incident Report
 
-Format findings as a structured incident report:
+Format findings as:
 
 ```
 ## Incident Report
 
 ### Summary
-<One-paragraph summary of what was found>
+<One-paragraph summary>
 
 ### Timeline
-- **[time]** — First occurrence / anomaly detected
-- **[time]** — Error rate increased to X/min
-- **[time]** — Monitor triggered (if applicable)
+- **[time]** — First occurrence
+- **[time]** — Error rate increased
 - **[time]** — Current state
 
 ### Affected Systems
 - **Source(s):** <source categories, hosts>
-- **Monitor(s):** <any triggered monitors>
-- **Impact:** <scope of impact — user-facing, backend, data pipeline, etc.>
+- **Monitor(s):** <triggered monitors>
+- **Impact:** <scope>
 
 ### Root Cause Analysis
-<What the logs suggest is happening>
-- Evidence: <specific log messages, patterns>
-- Confidence: <high/medium/low>
+<What logs suggest> — Evidence: <specific messages> — Confidence: <high/medium/low>
 
 ### Error Patterns
 | Error | Count | First Seen | Last Seen |
 |-------|-------|------------|-----------|
-| ... | ... | ... | ... |
 
 ### Recommendations
-1. <Immediate action — what to do now>
-2. <Investigation next step — what to check next>
-3. <Prevention — what to do long-term>
+1. <Immediate action>
+2. <Next investigation step>
+3. <Long-term prevention>
 ```
 
-## Query Syntax Quick Reference
+### Finalize Artifacts
 
-**Scope:**
-```
-_sourceCategory=prod/api
-_sourceHost=web-*
-```
+Write the report and evidence index:
 
-**Parse:**
-```
-| parse "status=*" as status
-| json "error.message" as err_msg
-```
+1. **`$ARTIFACT_DIR/report.md`** — Full incident report
+2. **`$ARTIFACT_DIR/index.md`** — Evidence index:
 
-**Filter:**
-```
-| where status >= 400
-| where !isNull(error)
-```
+```markdown
+# Evidence Index
 
-**Aggregate:**
-```
-| count by field
-| timeslice 5m | count by _timeslice
-| avg(response_time) by endpoint
-| pct(latency, 95) as p95
+| # | Phase | Description | File | Verify |
+|---|-------|-------------|------|--------|
+| 1 | Monitors | Critical monitors | evidence/02-monitors-critical.json | `jq '.monitors \| length'` |
+
+## How to verify
+1. Review evidence: `ls $ARTIFACT_DIR/evidence/`
+2. Re-run all queries: `bash $ARTIFACT_DIR/queries.sh`
 ```
 
-**Sort:**
-```
-| sort by _count desc
-| top 10 field by _count
-```
+Tell the user: `Artifacts saved to: $ARTIFACT_DIR/`
 
 ## Constraints
 
-- **Read-only**: Only search and read data. Do not modify monitors, collectors, or any configuration.
-- **Safe defaults**: Always use `--limit` flags. Start with `-l 30` for raw logs, `-l 100` for aggregations.
+- **Read-only**: Only search and read data. Never modify monitors, collectors, or configuration.
+- **Safe defaults**: Always use `--limit`. Start with `-l 30` for raw logs, `-l 100` for aggregations.
 - **No interactive mode**: Never use the `-i` flag.
-- **Progressive investigation**: Start broad, then narrow. Don't run excessive queries upfront.
-- Do not write files unless the user explicitly asks (e.g., "save this report").
-- If a command fails (e.g., no results, timeout), adapt the query and try again.
+- **Always save artifacts** to `.sumo-query/investigations/`.
+- Maximum 10 search queries per investigation to avoid API rate limits.
+- If a command fails, adapt the query and try again.
 - If the problem is unclear, ask clarifying questions before running queries.
-- Maximum 10 search queries per investigation to avoid API rate limits. Prioritize the most informative queries.
